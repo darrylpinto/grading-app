@@ -11,6 +11,7 @@ public class Submission {
 	@NotNull(message="homework is required")
 	private String homework;
 	
+	@NotNull(message="question is required")
 	private String question;
 	
 	private FileUploader codeSubmission;

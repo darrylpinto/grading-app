@@ -34,7 +34,7 @@ body {
 		<br>
 		<br>
  	 Homework: <form:radiobuttons path="homework"
-			items="${delete.options}" />
+			items="${hw.homeworkOptions}" />
 		<form:errors path="homework" cssClass="error" />
 
 
