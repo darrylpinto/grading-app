@@ -1,77 +1,84 @@
 package com.RitCapstone.GradingApp.controller;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import javax.validation.Valid;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.log4j.Logger;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.FileCopyUtils;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.RitCapstone.GradingApp.FileUploader;
-import com.RitCapstone.GradingApp.FileValidator;
+import com.RitCapstone.GradingApp.Customer;
+import com.RitCapstone.GradingApp.DELETE_IT;
+import com.RitCapstone.GradingApp.Submission;
 
 @Controller
-@RequestMapping("/upload")
+@RequestMapping("/submission")
 public class SubmissionController {
 
-	@Autowired
-	FileValidator fileValidator;
+	Submission submission;
 
-	@RequestMapping(value = "/uploadPage", method = RequestMethod.GET)
-	public ModelAndView uploadPage() {
+	private static Logger log = Logger.getLogger(SubmissionController.class);
 
-		ModelAndView model = new ModelAndView("upload_page");
-		model.addObject("formUpload", new FileUploader());
+	// add initBinder to resolve whitespace problem
+	@InitBinder
+	public void stringTrimmer(WebDataBinder dataBinder) {
 
-		return model;
+		StringTrimmerEditor trimmer = new StringTrimmerEditor(true);
+		dataBinder.registerCustomEditor(String.class, trimmer);
 	}
 
-	@RequestMapping(value = "/upload", method = RequestMethod.POST)
-	public ModelAndView upload(@ModelAttribute("formUpload") FileUploader fileUpload, BindingResult bindingResult) {
+	@RequestMapping(value = "/showForm", method = RequestMethod.GET)
+	public String showForm(Model model) {
 
-		fileValidator.validate(fileUpload, bindingResult);
+		String jspToDisplay = "student-submission";
 
+		if (!model.containsAttribute("submission")) {
+			model.addAttribute("submission", new Submission());
+			log.debug("adding submission to model");
+		}
+
+		if (!model.containsAttribute("delete")) {
+			model.addAttribute("delete", new DELETE_IT());
+			log.debug("adding delete to model");
+		}
+
+		log.debug("model in showForm: " + model);
+		log.debug("[/showForm]redirecting to " + jspToDisplay);
+
+		return jspToDisplay;
+	}
+
+	@RequestMapping(value = "/showForm", method = RequestMethod.POST)
+	public String validateShowForm(@Valid @ModelAttribute("submission") Submission submission, BindingResult bindingResult,
+			RedirectAttributes redirectAttributes) {
+	
 		if (bindingResult.hasErrors()) {
-			return new ModelAndView("upload_page");
+			redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.submission",
+					bindingResult);
+			redirectAttributes.addFlashAttribute("submission", submission);
+			log.debug("[{POST} of /showForm] Redirecting to showForm");
+			return "redirect:showForm";
 		}
-
-		return new ModelAndView("upload_success", "fileNames", processUpload(fileUpload));
+		log.debug("[{POST} of /showForm] Redirecting to showForm2");
+		return "redirect:showForm2";
 	}
 
-	private List<String> processUpload(FileUploader files) {
-		List<String> fileNames = new ArrayList<String>();
+	@RequestMapping("/showForm2")
+	public String showRemainingForm() {
 
-		CommonsMultipartFile[] commonsMultipartFiles = files.getFiles();
+		String jspToDisplay = "";
 
-		for (CommonsMultipartFile multipartFile : commonsMultipartFiles) {
-			try {
+			jspToDisplay = "student-submission-remaining";
+			log.debug("[/showForm2]redirecting to " + jspToDisplay);
+			return jspToDisplay;
 
-				String new_dir = "uploads_from_springMVC";
-				String path_sep = File.separator;
-				String chosen_dir = System.getProperty("user.dir") + path_sep + new_dir + path_sep;
-
-				// To create the directory if it is not there
-				new File(chosen_dir + ".tmp").mkdirs();
-
-				FileCopyUtils.copy(multipartFile.getBytes(),
-						new File(chosen_dir + multipartFile.getOriginalFilename()));
-
-				fileNames.add(multipartFile.getOriginalFilename());
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		return fileNames;
 	}
 
 }

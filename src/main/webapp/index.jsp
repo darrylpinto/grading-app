@@ -1,2 +1,2 @@
 
-<% response.sendRedirect("upload/uploadPage"); %> //change to welcome Student
+<% response.sendRedirect("submission/showForm"); %> //change to welcome Student

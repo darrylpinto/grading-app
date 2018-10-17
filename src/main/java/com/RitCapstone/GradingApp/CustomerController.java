@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class CustomerController {
 
 	// add initBinder to resolve whitespace problem
-
 	@InitBinder
 	public void stringTrimmer(WebDataBinder dataBinder) {
 
