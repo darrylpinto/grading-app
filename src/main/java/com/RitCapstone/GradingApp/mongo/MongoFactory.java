@@ -19,7 +19,7 @@ public class MongoFactory {
 
 	private static Logger log = Logger.getLogger(MongoFactory.class);
 	
-	static String MONGO_JSON = "mongo.json";
+	private final static String MONGO_JSON = "mongo.json";
 	
 	private static MongoClient mongo;
 

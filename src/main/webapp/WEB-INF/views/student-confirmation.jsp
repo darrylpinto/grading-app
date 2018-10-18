@@ -7,20 +7,35 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Success</title>
+<style>
+html {
+	display: table;
+	margin: auto;
+}
+
+body {
+	display: table-cell;
+	vertical-align: middle;
+}
+</style>
 </head>
 <body>
-++++++++++++ <br>
+	<h3>ALGORITHMS-GRADING</h3>
+	Code For Question ${submission.question}:
+	<br>
 	<c:forEach items="${codeFileNames}" var="fileName">
-  File <b>${fileName}</b> uploaded sucessfully<br />
+  File <b>${fileName}</b> uploaded successfully<br />
 	</c:forEach>
-++++++++++++ <br>
 	<br>
+	<br> Write-up For Question ${submission.question}:
 	<br>
-++++++++++++ <br>
 	<c:forEach items="${writeupFileNames}" var="fileName">
-  File <b>${fileName}</b> uploaded sucessfully<br />
+  File <b>${fileName}</b> uploaded successfully<br />
 	</c:forEach>
-++++++++++++ <br>
+	<br>
+	<form method="post">
+		<input type="submit" value="Submit Code for Another Question" />
+	</form>
 </body>
 </html>
 

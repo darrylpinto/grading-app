@@ -36,6 +36,9 @@ import com.RitCapstone.GradingApp.Submission;
 public class SubmissionController {
 
 	Submission submission;
+	private static final String DIRECTORY_TO_SAVE = "uploads_from_springMVC";
+	private static final String chosen_dir = System.getProperty("user.dir") + File.separator + DIRECTORY_TO_SAVE
+			+ File.separator;
 
 	@Autowired
 	FileValidator fileValidator;
@@ -44,9 +47,9 @@ public class SubmissionController {
 	@InitBinder
 	public void stringTrimmer(WebDataBinder dataBinder) {
 
-		StringTrimmerEditor trimmer = new StringTrimmerEditor(true); 
-		// If after trimming the string is empty, it is converted to null {Set by true} 
-		
+		StringTrimmerEditor trimmer = new StringTrimmerEditor(true);
+		// If after trimming the string is empty, it is converted to null {Set by true}
+
 		dataBinder.registerCustomEditor(String.class, trimmer);
 	}
 
@@ -145,8 +148,8 @@ public class SubmissionController {
 			BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
 		fileValidator.validate(submission, bindingResult);
-		log.debug("Model in POST validateRemainingForm " + model);
-
+		log.debug("**Model in POST validateRemainingForm " + model);
+		log.debug("**Submission in POST validateRemainingForm " + submission);
 		if (bindingResult.hasErrors()) {
 			redirectAttributes.addFlashAttribute("submission", submission);
 			redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.submission",
@@ -162,36 +165,65 @@ public class SubmissionController {
 		return "redirect:showConfirmation";
 	}
 
-	@RequestMapping(value = "/showConfirmation")
+	/**
+	 * Method to display confirmation and list of files submitted Also, files are
+	 * saved on the machine
+	 * 
+	 * @param submission Session Attribute
+	 * @return jsp file to display
+	 */
+	@GetMapping("/showConfirmation")
 	public String showConfirmation(@SessionAttribute("submission") Submission submission, Model model) {
-		log.debug("[GET showConfirmation] Displaying student-confirmation");
-		log.debug("Model in showConfirmation():" + model);
 
-		List<String> codeFiles = processAndSaveFiles(submission.getCodeFiles(), "CODE_");
-		List<String> writeupFiles = processAndSaveFiles(submission.getWriteupFiles(), "WRITEUP_");
+		List<String> codeFiles = processAndSaveFiles(submission.getCodeFiles());
+		List<String> writeupFiles = processAndSaveFiles(submission.getWriteupFiles());
 
 		model.addAttribute("codeFileNames", codeFiles);
 		model.addAttribute("writeupFileNames", writeupFiles);
-		
-		log.debug("Displaying: student-confirmation");
+
+		zip(submission.getUsername(), submission.getHomework(), submission.getQuestion(), submission.getCodeFiles(),
+				submission.getWriteupFiles());
+
+		log.debug("[GET showConfirmation] Displaying: student-confirmation");
 		return "student-confirmation";
 	}
 
-	private List<String> processAndSaveFiles(CommonsMultipartFile[] commonsMultipartFiles, String prepend) {
+	private void zip(String username, String homework, String question, CommonsMultipartFile[] codeFiles,
+			CommonsMultipartFile[] writeupFiles) {
+		
+		
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * This method redirects to showForm2. Also reinitializes question,
+	 *
+	 * @param submission Session Attribute
+	 * @return redirected to showForm2
+	 */
+	@PostMapping("/showConfirmation")
+	public String showFormAgain(@SessionAttribute("submission") Submission submission) {
+
+		log.debug("Model in showFormAgain " + submission);
+		submission.setQuestion(null);
+		submission.setCodeFiles(null);
+		submission.setWriteupFiles(null);
+		log.debug("Model in showFormAgain " + submission);
+		return "redirect:showForm2";
+	}
+
+	private List<String> processAndSaveFiles(CommonsMultipartFile[] commonsMultipartFiles) {
 		List<String> fileNames = new ArrayList<String>();
 
 		for (CommonsMultipartFile multipartFile : commonsMultipartFiles) {
 			try {
 
-				String new_dir = "uploads_from_springMVC";
-				String path_sep = File.separator;
-				String chosen_dir = System.getProperty("user.dir") + path_sep + new_dir + path_sep;
-
 				// To create the directory if it is not there
 				new File(chosen_dir + ".tmp").mkdirs();
 
 				FileCopyUtils.copy(multipartFile.getBytes(),
-						new File(chosen_dir + prepend + multipartFile.getOriginalFilename()));
+						new File(chosen_dir + multipartFile.getOriginalFilename()));
 
 				fileNames.add(multipartFile.getOriginalFilename());
 
@@ -199,7 +231,6 @@ public class SubmissionController {
 				e.printStackTrace();
 			}
 		}
-
 		return fileNames;
 	}
 }
