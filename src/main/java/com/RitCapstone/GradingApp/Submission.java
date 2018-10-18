@@ -1,48 +1,45 @@
 package com.RitCapstone.GradingApp;
 
+import java.util.Arrays;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
 public class Submission {
 
-	@NotBlank(message="RIT username is required")
+	@NotBlank(message = "RIT username is required")
 	private String username;
-	
-	@NotNull(message="homework is required")
+
+	@NotNull(message = "homework is required")
 	private String homework;
-	
-	@NotNull(message="question is required")
+
+	@NotNull(message = "question is required")
 	private String question;
-	
-	private FileUploader codeSubmission;
-	
-	private FileUploader writeupSubmission;
-	
+
+	private CommonsMultipartFile[] codeFiles;
+
+	private CommonsMultipartFile[] writeupFiles;
+
 	public Submission() {
 		this.username = null;
 		this.homework = null;
 		this.question = null;
-		this.codeSubmission = null;
-		this.writeupSubmission = null;
 	}
-		
-
-//	public Submission(@NotNull(message = "RIT username is required") String username, String homework, String question,
-//			FileUploader codeSubmission, FileUploader writeupSubmission) {
-//		super();
-//		this.username = username;
-//		this.homework = homework;
-//		this.question = question;
-//		this.codeSubmission = codeSubmission;
-//		this.writeupSubmission = writeupSubmission;
-//	}
 
 	@Override
 	public String toString() {
-		return "Submission [username=" + username + ", homework=" + homework + ", question=" + question + "]";
+		try {
+			return "Submission [username=" + username + ", homework=" + homework + ", question=" + question
+					+ ", codeFiles=" + Arrays.toString(codeFiles) + ", writeupFiles=" + Arrays.toString(writeupFiles)
+					+ "]";
+		} catch (NullPointerException e) {
+			return "Submission [username=" + username + ", homework=" + homework + ", question=" + question + "]";
+		}
 	}
 
-
+	
 	public String getUsername() {
 		return username;
 	}
@@ -67,23 +64,20 @@ public class Submission {
 		this.question = question;
 	}
 
-	public FileUploader getCodeSubmission() {
-		return codeSubmission;
+	public CommonsMultipartFile[] getCodeFiles() {
+		return codeFiles;
 	}
 
-	public void setCodeSubmission(FileUploader codeSubmission) {
-		this.codeSubmission = codeSubmission;
+	public void setCodeFiles(CommonsMultipartFile[] codeFiles) {
+		this.codeFiles = codeFiles;
 	}
 
-	public FileUploader getWriteupSubmission() {
-		return writeupSubmission;
+	public CommonsMultipartFile[] getWriteupFiles() {
+		return writeupFiles;
 	}
 
-	public void setWriteupSubmission(FileUploader writeupSubmission) {
-		this.writeupSubmission = writeupSubmission;
+	public void setWriteupFiles(CommonsMultipartFile[] writeupFiles) {
+		this.writeupFiles = writeupFiles;
 	}
-	
-	
-	
+
 }
-

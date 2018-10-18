@@ -28,7 +28,8 @@ body {
 <body>
 	<h3>ALGORITHMS-GRADING</h3>
 	<p>All the fields are required</p>
-	<form:form modelAttribute="submission" method="post">
+	<form:form modelAttribute="submission" method="post"
+		enctype="multipart/form-data">
 		
 	RIT CS Username: ${submission.username}
 		<br>
@@ -43,10 +44,23 @@ body {
 
 		<br>
 		<br>
+	Code for the Question: (*Max 2 MB combined)
+		<br>
+		<form:input path="codeFiles" type="file" multiple="multiple" />
+		<form:errors path="codeFiles" cssStyle="color: red" />
+		<br>
+		<br>
+	
+	Writeup for the Question: 	
+		<br>
+		<form:input path="writeupFiles" type="file" />
+		<form:errors path="writeupFiles" cssStyle="color: red" />
+		<br>
+		<br>
 
 		<input type="submit" value="SUBMIT" />
 	</form:form>
 
-	Part 1/2
+	Part 2/2
 </body>
 </html>
