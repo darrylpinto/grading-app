@@ -36,6 +36,10 @@ body {
 	<form method="post">
 		<input type="submit" value="Submit Code for Another Question" />
 	</form>
+	
+	<form method="post" action="redirectHome" >
+		<input type="submit" value="Logout" />
+	</form>
 </body>
 </html>
 

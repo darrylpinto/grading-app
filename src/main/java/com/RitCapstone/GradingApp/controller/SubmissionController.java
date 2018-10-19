@@ -190,10 +190,9 @@ public class SubmissionController {
 
 	private void zip(String username, String homework, String question, CommonsMultipartFile[] codeFiles,
 			CommonsMultipartFile[] writeupFiles) {
-		
-		
+
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
@@ -211,6 +210,18 @@ public class SubmissionController {
 		submission.setWriteupFiles(null);
 		log.debug("Model in showFormAgain " + submission);
 		return "redirect:showForm2";
+	}
+
+	@PostMapping("/redirectHome")
+	public String redirectHome(@SessionAttribute("submission") Submission submission) {
+
+		submission.setQuestion(null);
+		submission.setCodeFiles(null);
+		submission.setWriteupFiles(null);
+		submission.setUsername(null);
+		submission.setHomework(null);
+		log.debug("Model in redirectHome " + submission);
+		return "redirect:showForm";
 	}
 
 	private List<String> processAndSaveFiles(CommonsMultipartFile[] commonsMultipartFiles) {
