@@ -23,22 +23,22 @@ public class Homework {
 		this.countryOptions.put("UK", "United Kingdom");
 		
 		ArrayList<String> options1 = new ArrayList<>();
-		options1.add("a00");
-		options1.add("a01");
-		options1.add("a02");
-		options1.add("a04");
-		options1.add("a10");
+		options1.add("hw0");
+		options1.add("hw1");
+		options1.add("hw2");
+		options1.add("hw3");
+		options1.add("hw4");
 		
 		this.homeworkOptions=new String[options1.size()];
 		this.homeworkOptions = options1.toArray(this.homeworkOptions);
 		
 		
 		ArrayList<String> options2 = new ArrayList<>();
-		options2.add("b00");
-		options2.add("b01");
-		options2.add("b02");
-		options2.add("b04");
-		options2.add("b10");
+		options2.add("q0");
+		options2.add("q1");
+		options2.add("q2");
+		options2.add("q3");
+		options2.add("q4");
 		
 		this.questionOptions =new String[options2.size()];
 		this.questionOptions = options2.toArray(this.questionOptions);

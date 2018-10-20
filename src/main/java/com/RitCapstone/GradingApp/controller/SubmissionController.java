@@ -176,14 +176,18 @@ public class SubmissionController {
 	public String showConfirmation(@SessionAttribute("submission") Submission submission, Model model) {
 
 		String log_prepend = "[GET /showConfirmation]";
-		List<String> codeFiles = gradingService.processAndSaveFiles(submission.getCodeFiles());
-		List<String> writeupFiles = gradingService.processAndSaveFiles(submission.getWriteupFiles());
+
+		gradingService.saveFiles(submission.getUsername(), submission.getHomework(), submission.getQuestion(),
+				submission.getCodeFiles(), submission.getWriteupFiles());
+
+		List<String> codeFiles = submission.getFileNames(submission.codeFileType);
+		List<String> writeupFiles = submission.getFileNames(submission.writeupFileType);
 
 		model.addAttribute("codeFileNames", codeFiles);
 		model.addAttribute("writeupFileNames", writeupFiles);
 
-		gradingService.zip(submission.getUsername(), submission.getHomework(), submission.getQuestion(),
-				submission.getCodeFiles(), submission.getWriteupFiles());
+//		gradingService.zip(submission.getUsername(), submission.getHomework(), submission.getQuestion(),
+//				submission.getCodeFiles(), submission.getWriteupFiles());
 
 		log.debug(log_prepend + "Displaying: student-confirmation");
 		return "student-confirmation";
@@ -210,6 +214,7 @@ public class SubmissionController {
 	 * This method reinitializes all the fields in submission session attribute
 	 * 
 	 * It should redirect to validate page
+	 * 
 	 * @param submission Session Attribute
 	 * @return redirected to showForm
 	 */

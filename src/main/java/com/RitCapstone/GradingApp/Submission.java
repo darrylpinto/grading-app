@@ -1,6 +1,8 @@
 package com.RitCapstone.GradingApp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -8,6 +10,9 @@ import javax.validation.constraints.NotNull;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 public class Submission {
+
+	public final String codeFileType = "CODE";
+	public final String writeupFileType = "WRITEUP";
 
 	@NotBlank(message = "RIT username is required")
 	private String username;
@@ -39,7 +44,6 @@ public class Submission {
 		}
 	}
 
-	
 	public String getUsername() {
 		return username;
 	}
@@ -80,4 +84,22 @@ public class Submission {
 		this.writeupFiles = writeupFiles;
 	}
 
+	public List<String> getFileNames(String type) {
+
+		List<String> fileNames = new ArrayList<String>();
+		CommonsMultipartFile[] multipartFiles;
+
+		if (type == codeFileType)
+			multipartFiles = codeFiles;
+		else if (type == writeupFileType)
+			multipartFiles = writeupFiles;
+		else
+			multipartFiles = null;
+
+		for (CommonsMultipartFile multipartFile : multipartFiles) {
+			fileNames.add(multipartFile.getOriginalFilename());
+		}
+		return fileNames;
+
+	}
 }
