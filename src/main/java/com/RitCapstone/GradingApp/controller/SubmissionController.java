@@ -1,5 +1,6 @@
 package com.RitCapstone.GradingApp.controller;
 
+import java.io.File;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -24,7 +25,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.RitCapstone.GradingApp.FileValidator;
 import com.RitCapstone.GradingApp.Homework;
 import com.RitCapstone.GradingApp.Submission;
-import com.RitCapstone.GradingApp.service.GradingService;
+import com.RitCapstone.GradingApp.dao.SubmissionDAO;
+import com.RitCapstone.GradingApp.service.FileSaverService;
 
 @Controller
 @RequestMapping("/submission")
@@ -37,7 +39,10 @@ public class SubmissionController {
 	FileValidator fileValidator;
 
 	@Autowired
-	GradingService gradingService;
+	FileSaverService fileSaverService;
+
+	@Autowired
+	SubmissionDAO submissionDAO;
 
 	private static Logger log = Logger.getLogger(SubmissionController.class);
 
@@ -177,17 +182,22 @@ public class SubmissionController {
 
 		String log_prepend = "[GET /showConfirmation]";
 
-		gradingService.saveFiles(submission.getUsername(), submission.getHomework(), submission.getQuestion(),
-				submission.getCodeFiles(), submission.getWriteupFiles());
+		String zipPath = fileSaverService.saveFiles(submission.getUsername(), submission.getHomework(),
+				submission.getQuestion(), submission.getCodeFiles(), submission.getWriteupFiles());
+
+		String question = submission.getQuestion();
+
+		// TODO Add Service Layer
+		// TODO If homework already there then updateSubmission
+		
+		submissionDAO.updateSubmission(submission.getHomework(), submission.getUsername(), question, zipPath,
+				question + ".zip");
 
 		List<String> codeFiles = submission.getFileNames(submission.codeFileType);
 		List<String> writeupFiles = submission.getFileNames(submission.writeupFileType);
 
 		model.addAttribute("codeFileNames", codeFiles);
 		model.addAttribute("writeupFileNames", writeupFiles);
-
-//		gradingService.zip(submission.getUsername(), submission.getHomework(), submission.getQuestion(),
-//				submission.getCodeFiles(), submission.getWriteupFiles());
 
 		log.debug(log_prepend + "Displaying: student-confirmation");
 		return "student-confirmation";

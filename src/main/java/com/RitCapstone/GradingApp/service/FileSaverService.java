@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -18,9 +17,9 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 @Service
-public class GradingService {
+public class FileSaverService {
 
-	private static Logger log = Logger.getLogger(GradingService.class);
+	private static Logger log = Logger.getLogger(FileSaverService.class);
 
 	private static final String DIRECTORY_TO_SAVE = "uploads_from_springMVC";
 	private static final String chosen_dir = System.getProperty("user.dir") + File.separator + DIRECTORY_TO_SAVE
@@ -91,13 +90,14 @@ public class GradingService {
 	 * The file hierarchy is similar to try system. [It is present in:
 	 * grading-app/src/main/resources/]
 	 * 
-	 * @param username  RIT username
-	 * @param homework  Homework number
-	 * @param question  Question number
-	 * @param codeFiles files that are uploaded
-	 * @return list of filenames
+	 * @param username     RIT username
+	 * @param homework     Homework number
+	 * @param question     Question number
+	 * @param codeFiles    code files that are uploaded
+	 * @param writeupFiles writeup files that are uploaded
+	 * @return path of the zipped file
 	 */
-	public void saveFiles(String username, String homework, String question, CommonsMultipartFile[] codeFiles,
+	public String saveFiles(String username, String homework, String question, CommonsMultipartFile[] codeFiles,
 			CommonsMultipartFile[] writeupFiles) {
 
 		String currentPath = chosen_dir + homework + File.separator + username + File.separator + question
@@ -143,6 +143,7 @@ public class GradingService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return zipFileDest;
 
 	}
 

@@ -18,20 +18,59 @@ import com.mongodb.client.MongoDatabase;
 public class MongoFactory {
 
 	private static Logger log = Logger.getLogger(MongoFactory.class);
-	
-	private final static String MONGO_JSON = "mongo.json";
-	
+
+	public final static String mongoClient_JSON = "mongoClient.json";
+
 	private static MongoClient mongo;
+
+	private static String DATABASE_NAME = null;
 
 	private MongoFactory() {
 	}
 
-	public static MongoClient getMongo() {
+	/**
+	 * Method to read database name as mentioned in mongoClient_JSON To avoid
+	 * reading from the file repeatedly, we read once, save it to DATABASE_NAME and
+	 * return it when the method is called again
+	 * 
+	 * @return
+	 */
+	public static String getDatabaseName() {
+
+		if (DATABASE_NAME == null) {
+			ClassLoader classLoader = MongoFactory.class.getClassLoader();
+			File file = new File(classLoader.getResource(mongoClient_JSON).getFile());
+			JSONParser parser = new JSONParser();
+
+			try {
+				JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(file));
+				DATABASE_NAME = (String) jsonObject.get("databaseName");
+				return DATABASE_NAME;
+
+			} catch (IOException | ParseException e) {
+
+				log.info("Error in MongoFactory.getDatabaseName()");
+				log.error(e.getMessage());
+				return null;
+			}
+
+		} else {
+			return DATABASE_NAME;
+		}
+
+	}
+
+	/**
+	 * Method to get MongoClient
+	 * 
+	 * @return
+	 */
+	public static MongoClient getMongoClient() {
 
 		if (mongo == null) {
 
 			ClassLoader classLoader = MongoFactory.class.getClassLoader();
-			File file = new File(classLoader.getResource(MONGO_JSON).getFile());
+			File file = new File(classLoader.getResource(mongoClient_JSON).getFile());
 
 			JSONParser parser = new JSONParser();
 
@@ -39,8 +78,11 @@ public class MongoFactory {
 				JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(file));
 				String hostname = (String) jsonObject.get("hostname");
 				long port = (Long) jsonObject.get("port");
-				
+
+				log.info(String.format("MongoClient: Hostname: %s \t Port:%d", hostname, port));
+
 				mongo = new MongoClient(hostname, (int) port);
+				log.debug("New Mongo Client created");
 
 			} catch (IOException | ParseException | MongoException e) {
 				log.error(e);
@@ -50,12 +92,29 @@ public class MongoFactory {
 
 	}
 
-	public static MongoDatabase getDB(String db_name) {
-		return getMongo().getDatabase(db_name);
+	/**
+	 * To retrieve the database. If the database is not present, MongoDB will create
+	 * one
+	 * 
+	 * @param databaseName Name of dataBase
+	 * @return MongoDatabase to be returned
+	 */
+	public static MongoDatabase getDatabase(String databaseName) {
+		log.debug("getDatabase: " + databaseName);
+		return getMongoClient().getDatabase(databaseName);
 	}
 
-	public static MongoCollection<Document> getCollection(String db_name, String db_collection) {
-		return getDB(db_name).getCollection(db_collection);
+	/**
+	 * To retrieve the collection from database. If the collection is not present,
+	 * MongoDB will create one
+	 * 
+	 * @param databaseName   Name of dataBase
+	 * @param collectionName Name of the collection
+	 * @return MongoDatabase to be returned
+	 */
+	public static MongoCollection<Document> getCollection(String databaseName, String collectionName) {
+		log.debug(String.format("getCollection: %s from DB %s", collectionName, databaseName));
+		return getDatabase(databaseName).getCollection(collectionName);
 	}
 
 }
