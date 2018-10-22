@@ -10,10 +10,14 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.gridfs.GridFS;
+import com.mongodb.gridfs.GridFSDBFile;
+import com.mongodb.gridfs.GridFSInputFile;
 
 public class MongoFactory {
 
@@ -63,7 +67,7 @@ public class MongoFactory {
 	/**
 	 * Method to get MongoClient
 	 * 
-	 * @return
+	 * @return MongoClient object at hostname and port given in mongoClient_JSON
 	 */
 	public static MongoClient getMongoClient() {
 
@@ -104,6 +108,12 @@ public class MongoFactory {
 		return getMongoClient().getDatabase(databaseName);
 	}
 
+	// MongoClient.getDB(dbName) is deprecated but is the only constructor for GridFS 
+	public static DB getDB(String databaseName) {
+		log.debug("getDatabase: " + databaseName);
+		return getMongoClient().getDB(databaseName);
+	}
+
 	/**
 	 * To retrieve the collection from database. If the collection is not present,
 	 * MongoDB will create one
@@ -117,4 +127,25 @@ public class MongoFactory {
 		return getDatabase(databaseName).getCollection(collectionName);
 	}
 
+	public static void main(String[] args) throws IOException {
+
+		// TODO for testCases
+
+//		// Save file to GridFS
+//		DB db = MongoFactory.getDB("abc");
+//		String newFileName = "references";
+//		File txtFile = new File("/home/darryl/references.txt");
+//		GridFS gfs = new GridFS(db, "text");
+//		GridFSInputFile gfsFile = gfs.createFile(txtFile);
+//		gfsFile.setFilename(newFileName);
+//		gfsFile.save();
+
+//		 //Retrieve file from GridFS
+//		DB db = MongoFactory.getDB("abc");
+//		String newFileName = "references";
+//		GridFS gfs = new GridFS(db, "text");
+//		GridFSDBFile imageForOutput = gfs.findOne(newFileName);
+//		System.out.println(imageForOutput);
+//		imageForOutput.writeTo("/home/darryl/ref2.txt");
+	}
 }

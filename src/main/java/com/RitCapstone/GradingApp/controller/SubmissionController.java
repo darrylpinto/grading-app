@@ -1,6 +1,5 @@
 package com.RitCapstone.GradingApp.controller;
 
-import java.io.File;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -25,8 +24,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.RitCapstone.GradingApp.FileValidator;
 import com.RitCapstone.GradingApp.Homework;
 import com.RitCapstone.GradingApp.Submission;
-import com.RitCapstone.GradingApp.dao.SubmissionDAO;
 import com.RitCapstone.GradingApp.service.FileSaverService;
+import com.RitCapstone.GradingApp.service.SubmissionDBService;
 
 @Controller
 @RequestMapping("/submission")
@@ -42,7 +41,7 @@ public class SubmissionController {
 	FileSaverService fileSaverService;
 
 	@Autowired
-	SubmissionDAO submissionDAO;
+	SubmissionDBService submissionDBService;
 
 	private static Logger log = Logger.getLogger(SubmissionController.class);
 
@@ -181,23 +180,26 @@ public class SubmissionController {
 	public String showConfirmation(@SessionAttribute("submission") Submission submission, Model model) {
 
 		String log_prepend = "[GET /showConfirmation]";
-
-		String zipPath = fileSaverService.saveFiles(submission.getUsername(), submission.getHomework(),
-				submission.getQuestion(), submission.getCodeFiles(), submission.getWriteupFiles());
-
+		String homework = submission.getHomework();
+		String username = submission.getUsername();
 		String question = submission.getQuestion();
 
-		// TODO Add Service Layer
-		// TODO If homework already there then updateSubmission
-		
-		submissionDAO.updateSubmission(submission.getHomework(), submission.getUsername(), question, zipPath,
+		String zipPath = fileSaverService.saveFiles(homework, username, question, submission.getCodeFiles(),
+				submission.getWriteupFiles());
+
+		boolean savedSubmission = submissionDBService.saveSubmission(homework, username, question, zipPath,
 				question + ".zip");
 
-		List<String> codeFiles = submission.getFileNames(submission.codeFileType);
-		List<String> writeupFiles = submission.getFileNames(submission.writeupFileType);
+		if (!savedSubmission) {
+			log.error(String.format("Submission not saved:Homework (%s), username (%s), question (%s)", homework,
+					username, question));
+		}
 
-		model.addAttribute("codeFileNames", codeFiles);
-		model.addAttribute("writeupFileNames", writeupFiles);
+		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);
+		List<String> writeupFileNames = submission.getFileNames(submission.writeupFileType);
+
+		model.addAttribute("codeFileNames", codeFileNames);
+		model.addAttribute("writeupFileNames", writeupFileNames);
 
 		log.debug(log_prepend + "Displaying: student-confirmation");
 		return "student-confirmation";

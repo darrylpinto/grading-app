@@ -74,6 +74,7 @@ public class FileSaverService {
 			FileUtils.deleteQuietly(new File(zipFileDest + zipName));
 			log.info("Deleted stale zip file");
 			FileUtils.moveFileToDirectory(zipFile, new File(zipFileDest), false);
+			// false will avoid creating a dir if dir does not exist
 
 		}
 
@@ -97,7 +98,7 @@ public class FileSaverService {
 	 * @param writeupFiles writeup files that are uploaded
 	 * @return path of the zipped file
 	 */
-	public String saveFiles(String username, String homework, String question, CommonsMultipartFile[] codeFiles,
+	public String saveFiles(String homework, String username, String question, CommonsMultipartFile[] codeFiles,
 			CommonsMultipartFile[] writeupFiles) {
 
 		String currentPath = chosen_dir + homework + File.separator + username + File.separator + question

@@ -1,11 +1,8 @@
 package com.RitCapstone.GradingApp.dao;
 
-import java.io.File;
-
 import org.apache.log4j.Logger;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.RitCapstone.GradingApp.mongo.MongoFactory;
 import com.mongodb.BasicDBObject;
@@ -14,39 +11,42 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 
 @Repository
-@Transactional
 public class SubmissionDAOImpl implements SubmissionDAO {
 
 	private static Logger log = Logger.getLogger(SubmissionDAOImpl.class);
 	private static String log_prepend = String.format("[%s]", "SubmissionDAOImpl");
 
-	@Override
-	public File getSubmission(String homework, String username, String question) {
+	
+	public String getSubmissionLocation(String homework, String username, String question) {
 
-//		String collectionName = homework;
-//		String databaseName = MongoFactory.getDatabaseName();
-//
-//		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, collectionName);
-//
-//		BasicDBObject searchQuery = new BasicDBObject();
-//		searchQuery.put("username", username);
-//		searchQuery.put("question", question);
-//
-//		FindIterable<Document> findIterable = collection.find(searchQuery);
-//		MongoCursor<Document> cursor = findIterable.iterator();
-//
-//		Document doc;
-//		if (cursor.hasNext()) {
-//			doc = cursor.next();
-//
-//			return doc.get("file", File.class);
-//
-//		} else {
-//			log.warn(String.format("%s No submission found: Homework (%s), username (%s), question (%s)", log_prepend,
-//					homework, username, question));
-//			return null;
-//		}
-		return null;
+		log.info(String.format("%s Finding Submission: Homework (%s), username (%s), question (%s)", log_prepend,
+				homework, username, question));
+
+		String collectionName = homework;
+		String databaseName = MongoFactory.getDatabaseName();
+
+		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, collectionName);
+
+		BasicDBObject searchQuery = new BasicDBObject();
+		searchQuery.put("username", username);
+		searchQuery.put("question", question);
+
+		FindIterable<Document> findIterable = collection.find(searchQuery);
+		MongoCursor<Document> cursor = findIterable.iterator();
+
+		Document doc;
+		if (cursor.hasNext()) {
+			doc = cursor.next();
+			String zipPath = doc.get("path", String.class);
+			String zipFile = doc.get("fileName", String.class);
+			
+			return zipPath + zipFile;
+
+		} else {
+			log.warn(String.format("%s No submission found: Homework (%s), username (%s), question (%s)", log_prepend,
+					homework, username, question));
+			return null;
+		}
 
 	}
 
