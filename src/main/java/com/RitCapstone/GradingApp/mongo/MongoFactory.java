@@ -22,6 +22,7 @@ import com.mongodb.gridfs.GridFSInputFile;
 public class MongoFactory {
 
 	private static Logger log = Logger.getLogger(MongoFactory.class);
+	private static String log_prepend = String.format("[%s]", "MongoFactory");
 
 	public final static String mongoClient_JSON = "mongoClient.json";
 
@@ -53,8 +54,7 @@ public class MongoFactory {
 
 			} catch (IOException | ParseException e) {
 
-				log.info("Error in MongoFactory.getDatabaseName()");
-				log.error(e.getMessage());
+				log.error(log_prepend + " Error in MongoFactory.getDatabaseName(): " + e.getMessage());
 				return null;
 			}
 
@@ -89,7 +89,7 @@ public class MongoFactory {
 				log.debug("New Mongo Client created");
 
 			} catch (IOException | ParseException | MongoException e) {
-				log.error(e);
+				log.error(log_prepend + " Error in MongoFactory.getMongoClient(): " + e.getMessage());
 			}
 		}
 		return mongo;
@@ -104,14 +104,15 @@ public class MongoFactory {
 	 * @return MongoDatabase to be returned
 	 */
 	public static MongoDatabase getDatabase(String databaseName) {
-		log.debug("getDatabase: " + databaseName);
+		log.debug(log_prepend + " getDatabase: " + databaseName);
 		return getMongoClient().getDatabase(databaseName);
 	}
 
-	// MongoClient.getDB(dbName) is deprecated but is the only constructor for GridFS 
+	// MongoClient.getDB(dbName) is deprecated but is the only constructor for
+	// GridFS
 	@SuppressWarnings("deprecation")
 	public static DB getDB(String databaseName) {
-		log.debug("getDatabase: " + databaseName);
+		log.debug(log_prepend + "getDB: " + databaseName);
 		return getMongoClient().getDB(databaseName);
 	}
 
@@ -124,7 +125,7 @@ public class MongoFactory {
 	 * @return MongoDatabase to be returned
 	 */
 	public static MongoCollection<Document> getCollection(String databaseName, String collectionName) {
-		log.debug(String.format("getCollection: %s from DB %s", collectionName, databaseName));
+		log.debug(log_prepend + String.format("getCollection: %s from DB %s", collectionName, databaseName));
 		return getDatabase(databaseName).getCollection(collectionName);
 	}
 

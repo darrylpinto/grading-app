@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -145,6 +146,50 @@ public class FileSaverService {
 			e.printStackTrace();
 		}
 		return zipFileDest;
+
+	}
+
+	public boolean unzip(String zipFile, String destDir) {
+
+		File dir = new File(destDir);
+
+		if (!dir.exists())
+			dir.mkdirs();
+
+		try {
+
+			ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFile));
+			ZipEntry zipEntry = zipInputStream.getNextEntry();
+
+			while (zipEntry != null) {
+
+				String fileName = zipEntry.getName();
+				File newFile = new File(destDir + File.separator + fileName);
+
+				log.debug("Unzipping to " + newFile.getAbsolutePath());
+				FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+
+				int len;
+				byte[] buffer = new byte[1024];
+
+				while ((len = zipInputStream.read(buffer)) > 0) {
+					fileOutputStream.write(buffer, 0, len);
+				}
+
+				fileOutputStream.close();
+				zipInputStream.closeEntry();
+
+				zipEntry = zipInputStream.getNextEntry();
+			}
+
+			zipInputStream.closeEntry();
+			zipInputStream.close();
+			return true;
+			
+		} catch (IOException e) {
+			log.error(e.getMessage());
+			return false;
+		}
 
 	}
 

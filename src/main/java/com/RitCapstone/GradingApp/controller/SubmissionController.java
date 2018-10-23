@@ -26,6 +26,7 @@ import com.RitCapstone.GradingApp.Homework;
 import com.RitCapstone.GradingApp.Submission;
 import com.RitCapstone.GradingApp.service.FileSaverService;
 import com.RitCapstone.GradingApp.service.SubmissionDBService;
+import com.RitCapstone.GradingApp.service.TestCaseDBService;
 
 @Controller
 @RequestMapping("/submission")
@@ -42,6 +43,9 @@ public class SubmissionController {
 
 	@Autowired
 	SubmissionDBService submissionDBService;
+
+	@Autowired
+	TestCaseDBService testCaseDBService;
 
 	private static Logger log = Logger.getLogger(SubmissionController.class);
 
@@ -191,10 +195,27 @@ public class SubmissionController {
 				question + ".zip");
 
 		if (!savedSubmission) {
-			log.error(String.format("Submission not saved:Homework (%s), username (%s), question (%s)", homework,
-					username, question));
+			log.error(String.format("%s Submission not saved:Homework (%s), username (%s), question (%s)", log_prepend,
+					homework, username, question));
 		}
 
+		String unzipTestCaseLoc = zipPath + "testCases";
+
+		boolean testcaseToLocal = testCaseDBService.getTestCases(homework, question, unzipTestCaseLoc);
+
+		if (!testcaseToLocal) {
+			log.error(String.format("%s Test case not found :Homework (%s), question (%s)", log_prepend, homework,
+					username));
+		}
+
+		String zipFilePath = zipPath + question + ".zip";
+		boolean unzipped = fileSaverService.unzip(zipFilePath, zipPath + question); 
+		// It will unzip to directory question_Number
+
+		if (!unzipped) {
+			log.error(String.format("%s Unzip Failed for %s: Homework (%s), question (%s)", log_prepend, zipFilePath,
+					homework, username));
+		}
 		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);
 		List<String> writeupFileNames = submission.getFileNames(submission.writeupFileType);
 

@@ -9,5 +9,7 @@ public interface TestCasesDAO {
 	public boolean createTestCase(String homework, String question, String testCaseNumber, File testcaseFile);
 
 	public boolean updateTestCase(String homework, String question, String testCaseNumber, File testcaseFile);
+	
+	public boolean testCaseExists(String homework, String question, String testCaseNumber);
 
 }

@@ -27,18 +27,18 @@ public class Homework {
 		options1.add("hw1");
 		options1.add("hw2");
 		options1.add("hw3");
-		options1.add("hw4");
+		options1.add("hw99");
 		
 		this.homeworkOptions=new String[options1.size()];
 		this.homeworkOptions = options1.toArray(this.homeworkOptions);
 		
 		
 		ArrayList<String> options2 = new ArrayList<>();
-		options2.add("q0");
-		options2.add("q1");
-		options2.add("q2");
-		options2.add("q3");
-		options2.add("q4");
+		options2.add("0");
+		options2.add("1");
+		options2.add("2");
+		options2.add("3");
+		options2.add("4");
 		
 		this.questionOptions =new String[options2.size()];
 		this.questionOptions = options2.toArray(this.questionOptions);

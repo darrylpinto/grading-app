@@ -29,6 +29,37 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	private static String log_prepend = String.format("[%s]", "TestCasesDAOImpl");
 
 	@Override
+	public boolean testCaseExists(String homework, String question, String testCaseNumber) {
+		String databaseName = MongoFactory.getDatabaseName();
+
+		try {
+			MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, testCaseCollection);
+
+			BasicDBObject searchQuery = new BasicDBObject();
+			searchQuery.put("homework", homework);
+			searchQuery.put("question", question);
+			searchQuery.put("testCaseNumber", testCaseNumber);
+
+			FindIterable<Document> findIterable = collection.find(searchQuery);
+			MongoCursor<Document> cursor = findIterable.iterator();
+
+			if (!cursor.hasNext()) {
+				log.warn(String.format("%s No testCaseFile found: Homework (%s), question (%s) testCaseNumber (%s)",
+						log_prepend, homework, question, testCaseNumber));
+				return false;
+			} else {
+				log.debug(String.format("%s TestCases Found: : Homework (%s), question (%s) testCaseNumber (%s)",
+						log_prepend, homework, question, testCaseNumber));
+				return true;
+			}
+		} catch (Exception e) {
+			log.error(log_prepend + " Exception occurred in testCasesExists:" + e.getMessage());
+			return false;
+		}
+
+	}
+
+	@Override
 	public boolean getTestCaseFiles(String homework, String question, String destLocation) {
 
 		log.info(String.format("%s Retrieving testCases, Homework (%s), question (%s)", log_prepend, homework,
@@ -60,9 +91,9 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 					Document doc = cursor.next();
 					String fileName = doc.get("fileName", String.class);
 					GridFSDBFile DBFile = gfs.findOne(fileName);
-					
+
 					new File(destLocation).mkdirs();
-					
+
 					String path;
 					if (destLocation.endsWith(File.separator)) {
 						path = destLocation + fileName;
@@ -80,7 +111,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			}
 
 		} catch (Exception e) {
-			log.error(log_prepend + " " + e.getMessage());
+			log.error(log_prepend + " Exception occurred in getTestCaseFiles:" + e.getMessage());
 			return false;
 		}
 
@@ -135,7 +166,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 				return true;
 			}
 		} catch (Exception e) {
-			log.error(log_prepend + " " + e.getMessage());
+			log.error(log_prepend + " Exception occurred in createTestCase:" + e.getMessage());
 			return false;
 		}
 
@@ -185,12 +216,16 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			return true;
 
 		} catch (Exception e) {
-			log.error(log_prepend + " " + e.getMessage());
-			log.error(
-					String.format("%s Error while Updating testCase: Homework (%s), question (%s), testCaseNumber (%s)",
-							log_prepend, homework, question, testCaseNumber));
+			log.error(log_prepend + " Exception occurred in updateTestCase:" + e.getMessage());
 			return false;
 		}
+	}
+	
+	public static void main(String[] args) {
+		
+//		File f = new File("/home/darryl/_testCases/input-2.5");
+//		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", "5", f);
+//		System.out.println(created);
 	}
 
 }
