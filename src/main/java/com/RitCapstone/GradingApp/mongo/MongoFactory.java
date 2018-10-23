@@ -109,6 +109,7 @@ public class MongoFactory {
 	}
 
 	// MongoClient.getDB(dbName) is deprecated but is the only constructor for GridFS 
+	@SuppressWarnings("deprecation")
 	public static DB getDB(String databaseName) {
 		log.debug("getDatabase: " + databaseName);
 		return getMongoClient().getDB(databaseName);
@@ -127,25 +128,4 @@ public class MongoFactory {
 		return getDatabase(databaseName).getCollection(collectionName);
 	}
 
-	public static void main(String[] args) throws IOException {
-
-		// TODO for testCases
-
-//		// Save file to GridFS
-//		DB db = MongoFactory.getDB("abc");
-//		String newFileName = "references";
-//		File txtFile = new File("/home/darryl/references.txt");
-//		GridFS gfs = new GridFS(db, "text");
-//		GridFSInputFile gfsFile = gfs.createFile(txtFile);
-//		gfsFile.setFilename(newFileName);
-//		gfsFile.save();
-
-//		 //Retrieve file from GridFS
-//		DB db = MongoFactory.getDB("abc");
-//		String newFileName = "references";
-//		GridFS gfs = new GridFS(db, "text");
-//		GridFSDBFile imageForOutput = gfs.findOne(newFileName);
-//		System.out.println(imageForOutput);
-//		imageForOutput.writeTo("/home/darryl/ref2.txt");
-	}
 }
