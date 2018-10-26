@@ -2,3 +2,7 @@ target/
 .classpath
 .settings/
 .project
+src/main/python/_*
+src/main/python/input*
+src/main/resources/judge0Response.json
+

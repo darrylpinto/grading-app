@@ -222,10 +222,10 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	}
 	
 	public static void main(String[] args) {
-		
-//		File f = new File("/home/darryl/_testCases/input-2.5");
-//		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", "5", f);
-//		System.out.println(created);
+		System.out.println("hi");
+		File f = new File("/home/darryl/_testCases/input-2.4");
+		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", "4", f);
+		System.out.println(created);
 	}
 
 }

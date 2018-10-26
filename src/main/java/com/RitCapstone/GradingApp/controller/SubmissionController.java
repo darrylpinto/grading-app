@@ -50,7 +50,7 @@ public class SubmissionController {
 	private static Logger log = Logger.getLogger(SubmissionController.class);
 
 	/**
-	 * This method will trim all the strings
+	 * This method will trim all the strings received from form data
 	 */
 	@InitBinder
 	public void stringTrimmer(WebDataBinder dataBinder) {
@@ -187,35 +187,45 @@ public class SubmissionController {
 		String homework = submission.getHomework();
 		String username = submission.getUsername();
 		String question = submission.getQuestion();
-
+		
+		// save the files uploaded my student to local machine
 		String zipPath = fileSaverService.saveFiles(homework, username, question, submission.getCodeFiles(),
 				submission.getWriteupFiles());
 
+		// save the information of homework, question, username, and submission location to mongoDB
 		boolean savedSubmission = submissionDBService.saveSubmission(homework, username, question, zipPath,
 				question + ".zip");
-
 		if (!savedSubmission) {
 			log.error(String.format("%s Submission not saved:Homework (%s), username (%s), question (%s)", log_prepend,
 					homework, username, question));
 		}
 
-		String unzipTestCaseLoc = zipPath + "testCases";
-
+		// Unzip the test case files to local
+		String unzipTestCaseLoc = zipPath + "testCases" + question;
 		boolean testcaseToLocal = testCaseDBService.getTestCases(homework, question, unzipTestCaseLoc);
-
 		if (!testcaseToLocal) {
 			log.error(String.format("%s Test case not found :Homework (%s), question (%s)", log_prepend, homework,
 					username));
 		}
 
+		// unzip the code that was zipped, this unzipped code files will be passed to OnlineCompileAPIService 
 		String zipFilePath = zipPath + question + ".zip";
 		boolean unzipped = fileSaverService.unzip(zipFilePath, zipPath + question); 
 		// It will unzip to directory question_Number
-
 		if (!unzipped) {
 			log.error(String.format("%s Unzip Failed for %s: Homework (%s), question (%s)", log_prepend, zipFilePath,
 					homework, username));
 		}
+		
+		// TODO delete non code -file from unzip path
+		
+		// TODO OnlineCompileAPIService methods to get the answer of the submission
+		
+		// TODO All the files in test cases need to be run in API
+		
+		// TODO delete unzip folder, testcases and code
+		
+		// Show confirmation to students of submitted file
 		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);
 		List<String> writeupFileNames = submission.getFileNames(submission.writeupFileType);
 

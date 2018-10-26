@@ -83,10 +83,10 @@ public class MongoFactory {
 				String hostname = (String) jsonObject.get("hostname");
 				long port = (Long) jsonObject.get("port");
 
-				log.info(String.format("MongoClient: Hostname: %s \t Port:%d", hostname, port));
+				log.info(String.format("%s MongoClient: Hostname: %s \t Port:%d", log_prepend, hostname, port));
 
 				mongo = new MongoClient(hostname, (int) port);
-				log.debug("New Mongo Client created");
+				log.debug(log_prepend + " New Mongo Client created");
 
 			} catch (IOException | ParseException | MongoException e) {
 				log.error(log_prepend + " Error in MongoFactory.getMongoClient(): " + e.getMessage());
