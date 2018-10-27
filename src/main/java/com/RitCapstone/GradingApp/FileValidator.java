@@ -18,7 +18,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 @Component
 public class FileValidator implements Validator {
 
-	private void validationHelper(String type, CommonsMultipartFile[] files, HashSet<String> ext, long maxSize,
+	private void validationHelper(String type, CommonsMultipartFile[] files, HashSet<String> extensionSet, long maxSize,
 			String maxSizeString, Errors errors) {
 		long sum = 0;
 		for (CommonsMultipartFile file : files) {
@@ -30,8 +30,8 @@ public class FileValidator implements Validator {
 
 			if (size == 0) {
 				errors.rejectValue(type, "missingFile", "No files uploaded");
-			} else if (!ext.contains(extension)) {
-				errors.rejectValue(type, "incorrectExtension", "Allowed files: " + ext);
+			} else if (!extensionSet.contains(extension)) {
+				errors.rejectValue(type, "incorrectExtension", "Allowed files: " + extensionSet);
 			} else {
 				sum += size;
 			}

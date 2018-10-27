@@ -2,10 +2,14 @@ package com.RitCapstone.GradingApp.service;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 
 import org.apache.log4j.Logger;
@@ -14,7 +18,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Service;
 
-import com.RitCapstone.GradingApp.mongo.MongoFactory;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 
@@ -26,74 +29,123 @@ public class OnlineCompileAPIService {
 	private static Logger log = Logger.getLogger(OnlineCompileAPIService.class);
 	private static String log_prepend = String.format("[%s]", "OnlineCompileAPIService");
 
-	/**
-	 * Method to call src/main/python script to convert the student code to
-	 * jsonValidString
-	 * 
-	 * @param dir_name       directory where code files are there
-	 * @param main_file_name file with the main method, {Generally it should be the
-	 *                       Question Submission name}. For example, If the question
-	 *                       is checkPrime, the student should submit
-	 *                       checkPrime.java, checkPrime.cpp and this file should
-	 *                       have the main method
-	 * 
-	 * @return JSONValidString
-	 */
-	public String getJSONValidStringCode(String dir_name, String main_file_name) {
+	public String getJSONValidStringCode(String dir_name, String mainFileName) throws Exception {
 
-		ClassLoader classLoader = MongoFactory.class.getClassLoader();
-		File file = new File(classLoader.getResource(python_JSON).getFile());
-		JSONParser parser = new JSONParser();
+		File dir = new File(dir_name);
+		File[] listOfFiles = dir.listFiles();
 
-		String codeLoc = "", outputLoc = "";
+		// Finding the code language
+		String extension = "";
+		for (File file : listOfFiles) {
 
-		try {
-			// Get Python code and output location from JSON file
-			JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(file));
-			codeLoc = (String) jsonObject.get("codeLocation");
-			outputLoc = (String) jsonObject.get("outputLocation");
+			String filename = file.getName();
+			String[] _parts = filename.trim().split("\\.");
+			extension = "." + _parts[_parts.length - 1];
 
-		} catch (IOException | ParseException e) {
-			log.error(log_prepend + " Error in reading from JSON file [getJSONValidStringCode]: " + e.getMessage());
-			return null;
-		}
-
-		try {
-
-			String command = String.format("python3 %s %s %s %s", codeLoc, dir_name, main_file_name, outputLoc);
-			log.debug(log_prepend + " COMMAND: " + command);
-
-			// Run the command
-			Process p = Runtime.getRuntime().exec(command);
-			p.waitFor();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-			String line = "", codeOutput = "";
-			while ((line = reader.readLine()) != null) {
-				codeOutput += line;
+			if (extension.equals(".java") || extension.equals(".cpp")) {
+				break;
 			}
-			reader.close();
-
-			log.debug(log_prepend + " Python code output: " + codeOutput);
-
-			File jsonValidStringFile = new File(outputLoc);
-			String fileOutput = "";
-			// Retrieve the JSON valid String from outputLoc
-			Scanner sc = new Scanner(jsonValidStringFile);
-			sc.useDelimiter("\\Z");
-			fileOutput = sc.next();
-			sc.close();
-
-			// delete outputLoc
-			jsonValidStringFile.delete();
-			log.debug(log_prepend + " jsonValidString deleted");
-
-			return fileOutput;
-
-		} catch (Exception e) {
-			log.error(log_prepend + " Error while running Python code [getJSONValidStringCode]: " + e.getMessage());
-			return null;
 		}
+
+		String jsonValidCodeString = "";
+		if (extension.equals("")) {
+			throw new Exception("unsupported format received: Allowed formats are '.java' and '.cpp'");
+		} else if (extension.equals(".java")) {
+			jsonValidCodeString = combineJava(listOfFiles, mainFileName);
+		} else if (extension.equals(".cpp")) {
+			jsonValidCodeString = combineCPP(listOfFiles);
+		} else {
+			throw new Exception("should not come here");
+		}
+
+		return jsonValidCodeString;
+	}
+
+	private String combineCPP(File[] listOfFiles) throws IOException {
+		System.out.println("In cpp");
+		// We have to separate header files and cpp files
+		List<File> headerFiles = new ArrayList<>();
+		List<File> cppFiles = new ArrayList<>();
+		String output = "";
+
+		for (File file : listOfFiles) {
+			String filename = file.getName();
+			String[] _parts = filename.trim().split("\\.");
+			String extension = "." + _parts[_parts.length - 1];
+
+			if (extension.equals(".h")) {
+				headerFiles.add(file);
+			} else if (extension.equals(".cpp")) {
+				cppFiles.add(file);
+			} else {
+				log.error(log_prepend + " the file supplied is neither .cpp nor .h " + filename);
+			}
+		}
+
+		List<String> headerFileNames = new ArrayList<>();
+
+		for (File headerFile : headerFiles) {
+			headerFileNames.add(headerFile.getName());
+			Scanner sc = new Scanner(headerFile);
+			sc.useDelimiter("\\Z");
+			String currentFileContent = sc.next();
+			sc.close();
+			output += currentFileContent + "\n";
+		}
+
+		for (File cppFile : cppFiles) {
+			String line = "";
+			BufferedReader reader = new BufferedReader(new FileReader(cppFile));
+			String currentFileContent = "";
+
+			// Remove user-defined header:For each line we search of name of header file in
+			// the line. If header file name is found we ignore that line
+			while ((line = reader.readLine()) != null) {
+				for (String headerName : headerFileNames) {
+					if (line.indexOf(headerName) == -1) {
+						currentFileContent += line + "\n";
+					}
+				}
+			}
+
+			output += currentFileContent + "\n";
+			reader.close();
+		}
+
+		output = output.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t");
+
+		return output;
+	}
+
+	private String combineJava(File[] listOfFiles, String mainFileName) throws IOException {
+
+		String codeLines = "";
+		String importLines = "";
+
+		// We have to separate import statements from other rest of code
+		for (File file : listOfFiles) {
+			String line = "";
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+
+			while ((line = reader.readLine()) != null) {
+				if (line.indexOf("import") != -1) {
+					importLines += line + "\n";
+				} else if (line.indexOf("package") != -1) {
+					// Ignore package lines
+				} else {
+					codeLines += line + "\n";
+				}
+
+			}
+
+			reader.close();
+		}
+
+		String output = importLines + codeLines;
+		output = output.replace("\\", "\\\\").replace("\"", "\\\"").replace("public class", "class")
+				.replace("class " + mainFileName, "public class Main").replace("\t", "\\t").replace("\n", "\\n");
+
+		return output;
 	}
 
 	/**
@@ -197,17 +249,18 @@ public class OnlineCompileAPIService {
 		}
 	}
 
-	public static void main(String args[]) {
+	public static void main(String args[]) throws Exception {
 
-		OnlineCompileAPIService api = new OnlineCompileAPIService();
-		System.out.println("hi");
-		String code = api.getJSONValidStringCode("/home/darryl/uploads_from_springMVC/hw99/_kja1/1",
-				"MaxRectanglePerimeter");
-
-		String _input = api.getJSONValidTestCase(new File("src/main/python/input-2.3"));
-		String output = api.useJudge0API(code, ".java", _input);
-		System.out.println(output);
-		System.out.println("bye");
+//		OnlineCompileAPIService api = new OnlineCompileAPIService();
+//		System.out.println("hi");
+//		String code = api.getJSONValidStringCode(
+//				"/home/darryl/eclipse-workspace/grading-app/src/main/java/com/RitCapstone/GradingApp/service/temp",
+//				"MaxRectanglePerimeter");
+//		
+//		String _input = api.getJSONValidTestCase(new File("src/main/python/input-2.6"));
+//		String output = api.useJudge0API(code, ".cpp", _input);
+//		System.out.println(output);
+//		System.out.println("bye");
 	}
 
 }

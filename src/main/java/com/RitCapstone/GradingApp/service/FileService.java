@@ -3,7 +3,10 @@ package com.RitCapstone.GradingApp.service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -13,14 +16,22 @@ import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
-@Service
-public class FileSaverService {
+import com.RitCapstone.GradingApp.mongo.MongoFactory;
 
-	private static Logger log = Logger.getLogger(FileSaverService.class);
+@Service
+public class FileService {
+
+	private static Logger log = Logger.getLogger(FileService.class);
+	private static String log_prepend = "[FileService]";
+
+	private static final String fileRestrictionJSON = "fileRestrictions.json";
 
 	private static final String DIRECTORY_TO_SAVE = "uploads_from_springMVC";
 	private static final String chosen_dir = System.getProperty("user.dir") + File.separator + DIRECTORY_TO_SAVE
@@ -48,7 +59,7 @@ public class FileSaverService {
 		// saving all files to zip
 		for (File file : listOfFiles) {
 			if (file.isFile()) {
-				log.debug(String.format("Zipping into %s: %s", zipName, file.getName()));
+				log.debug(String.format("%s Zipping into %s: %s", log_prepend, zipName, file.getName()));
 
 				ZipEntry zipEntry = new ZipEntry(file.getName());
 				out.putNextEntry(zipEntry);
@@ -61,7 +72,7 @@ public class FileSaverService {
 		}
 		out.close();
 
-		log.info(String.format("Moving %s to %s", zipFile.getAbsolutePath(), zipFileDest));
+		log.info(String.format("%s Moving %s to %s", log_prepend, zipFile.getAbsolutePath(), zipFileDest));
 
 		// Move the zip folder out of current folder to zipFileDest
 		try {
@@ -71,9 +82,9 @@ public class FileSaverService {
 			// submission]
 
 		} catch (FileExistsException e) {
-			log.info(e.getMessage());
+			log.info(log_prepend + " " + e.getMessage());
 			FileUtils.deleteQuietly(new File(zipFileDest + zipName));
-			log.info("Deleted stale zip file");
+			log.info(log_prepend + " " + "Deleted stale zip file");
 			FileUtils.moveFileToDirectory(zipFile, new File(zipFileDest), false);
 			// false will avoid creating a dir if dir does not exist
 
@@ -81,7 +92,7 @@ public class FileSaverService {
 
 		// Delete the question folder as it has been zipped
 		FileUtils.deleteDirectory(new File(filesToZipPath));
-		log.info("Deleted " + filesToZipPath);
+		log.info(log_prepend + " Deleted " + filesToZipPath);
 
 	}
 
@@ -113,18 +124,18 @@ public class FileSaverService {
 			try {
 
 				// Should not have entered here as we delete the folder after zipping
-				log.warn(destinationDir.getAbsolutePath() + " exists!! Deleting it");
+				log.warn(log_prepend + " " + destinationDir.getAbsolutePath() + " exists!! Deleting it");
 				FileUtils.deleteDirectory(destinationDir);
 
 			} catch (IOException e) {
-				log.error("Error deleting " + destinationDir.getName());
+				log.error(log_prepend + " Error deleting " + destinationDir.getName());
 				e.printStackTrace();
 			}
 
 		}
 
 		// To create the directory if it is not there
-		log.debug("Creating " + destinationDir.getAbsolutePath());
+		log.debug(log_prepend + " Creating " + destinationDir.getAbsolutePath());
 		new File(currentPath + ".tmp").mkdirs();
 
 		CommonsMultipartFile[] files = (CommonsMultipartFile[]) ArrayUtils.addAll(codeFiles, writeupFiles);
@@ -143,12 +154,19 @@ public class FileSaverService {
 		try {
 			zip(currentPath, question + ".zip", zipFileDest);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error(log_prepend + "" + e.getMessage());
 		}
 		return zipFileDest;
 
 	}
 
+	/**
+	 * Method to unzip a zip file an d save the files to destDir
+	 * 
+	 * @param zipFile zip file to unzip
+	 * @param destDir the directory where files will be unzipped
+	 * @return boolean indicating success/failure of unzip method
+	 */
 	public boolean unzip(String zipFile, String destDir) {
 
 		File dir = new File(destDir);
@@ -166,7 +184,7 @@ public class FileSaverService {
 				String fileName = zipEntry.getName();
 				File newFile = new File(destDir + File.separator + fileName);
 
-				log.debug("Unzipping to " + newFile.getAbsolutePath());
+				log.debug(log_prepend + " Unzipping to " + newFile.getAbsolutePath());
 				FileOutputStream fileOutputStream = new FileOutputStream(newFile);
 
 				int len;
@@ -185,12 +203,75 @@ public class FileSaverService {
 			zipInputStream.closeEntry();
 			zipInputStream.close();
 			return true;
-			
+
 		} catch (IOException e) {
-			log.error(e.getMessage());
+			log.error(log_prepend + "" + e.getMessage());
 			return false;
 		}
 
+	}
+
+	/**
+	 * Method to delete non Code files from the directory
+	 * 
+	 * @param dirName Directory from where the non-code files will be deleted
+	 * @return boolean indicating success/failure of deleteNonCodeFiles method
+	 */
+	public boolean deleteNonCodeFiles(String dirName) {
+
+		File[] listOfFiles = getFiles(dirName);
+		if (listOfFiles == null) {
+			return false; // as listOfFiles is not a directory
+		}
+		// get the code extensions from fileRestrictions.json
+		ClassLoader classLoader = MongoFactory.class.getClassLoader();
+		File jsonFile = new File(classLoader.getResource(fileRestrictionJSON).getFile());
+
+		JSONParser parser = new JSONParser();
+
+		HashSet<String> codeExtensionSet = new HashSet<>();
+		try {
+			JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(jsonFile));
+			JSONArray _codeExt = (JSONArray) jsonObject.get("codeExtension");
+
+			Iterator<?> it = _codeExt.iterator();
+			while (it.hasNext())
+				codeExtensionSet.add(it.next().toString());
+
+		} catch (Exception e) {
+			log.error(log_prepend + " Error while reading jsonFile in deleteFile: " + e.getMessage());
+			return false;
+		}
+
+		try {
+			for (File file : listOfFiles) {
+
+				String filename = file.getName();
+				String[] _parts = filename.trim().split("\\.");
+				String extension = "." + _parts[_parts.length - 1];
+
+				if (!codeExtensionSet.contains(extension)) {
+					file.delete();
+					log.info(log_prepend + " File deleted: " + filename);
+				}
+			}
+			return true;
+
+		} catch (Exception e) {
+			log.error(log_prepend + " Error in deleteFile: " + e.getMessage());
+			return false;
+		}
+
+	}
+
+	public File[] getFiles(String dirName) {
+		File dir = new File(dirName);
+		if (!dir.isDirectory()) {
+			log.error(log_prepend + " " + dir.getName() + " is not a directory");
+			return null;
+		}
+
+		return dir.listFiles();
 	}
 
 }

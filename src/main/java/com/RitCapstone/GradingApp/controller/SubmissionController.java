@@ -1,9 +1,13 @@
 package com.RitCapstone.GradingApp.controller;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.Valid;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -24,7 +28,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.RitCapstone.GradingApp.FileValidator;
 import com.RitCapstone.GradingApp.Homework;
 import com.RitCapstone.GradingApp.Submission;
-import com.RitCapstone.GradingApp.service.FileSaverService;
+import com.RitCapstone.GradingApp.service.FileService;
+import com.RitCapstone.GradingApp.service.OnlineCompileAPIService;
 import com.RitCapstone.GradingApp.service.SubmissionDBService;
 import com.RitCapstone.GradingApp.service.TestCaseDBService;
 
@@ -39,13 +44,16 @@ public class SubmissionController {
 	FileValidator fileValidator;
 
 	@Autowired
-	FileSaverService fileSaverService;
+	FileService fileService;
 
 	@Autowired
 	SubmissionDBService submissionDBService;
 
 	@Autowired
 	TestCaseDBService testCaseDBService;
+
+	@Autowired
+	OnlineCompileAPIService compileAPIService;
 
 	private static Logger log = Logger.getLogger(SubmissionController.class);
 
@@ -187,12 +195,13 @@ public class SubmissionController {
 		String homework = submission.getHomework();
 		String username = submission.getUsername();
 		String question = submission.getQuestion();
-		
+
 		// save the files uploaded my student to local machine
-		String zipPath = fileSaverService.saveFiles(homework, username, question, submission.getCodeFiles(),
+		String zipPath = fileService.saveFiles(homework, username, question, submission.getCodeFiles(),
 				submission.getWriteupFiles());
 
-		// save the information of homework, question, username, and submission location to mongoDB
+		// save the information of homework, question, username, and submission location
+		// to mongoDB
 		boolean savedSubmission = submissionDBService.saveSubmission(homework, username, question, zipPath,
 				question + ".zip");
 		if (!savedSubmission) {
@@ -208,29 +217,66 @@ public class SubmissionController {
 					username));
 		}
 
-		// unzip the code that was zipped, this unzipped code files will be passed to OnlineCompileAPIService 
-		String zipFilePath = zipPath + question + ".zip";
-		boolean unzipped = fileSaverService.unzip(zipFilePath, zipPath + question); 
-		// It will unzip to directory question_Number
+		String zipFile = zipPath + question + ".zip";
+		String unzipDest = zipPath + question;
+
+		boolean unzipped = fileService.unzip(zipFile, unzipDest);
+		// It will unzip to directory question directory
+
 		if (!unzipped) {
-			log.error(String.format("%s Unzip Failed for %s: Homework (%s), question (%s)", log_prepend, zipFilePath,
+			log.error(String.format("%s Unzip Failed for %s: Homework (%s), question (%s)", log_prepend, zipFile,
 					homework, username));
 		}
+
+		// delete non code-file from unzip dir
+		fileService.deleteNonCodeFiles(unzipDest);
+
+		// TODO main_file_name needs to be resolved here
+		String jsonValidString = null;
+		try {
+			jsonValidString = compileAPIService.getJSONValidStringCode(unzipDest, "MaxRectanglePerimeter");
+		} catch (Exception e) {
+			log.error(log_prepend + " Error in getting json valid string: " + e.getMessage());
+		}
+		System.out.println("~~~~~~~~~" + jsonValidString);
+
+		// Get all the test case files
+		File[] testCaseFiles = fileService.getFiles(unzipTestCaseLoc);
+
+		ArrayList<String> outputList = new ArrayList<>();
 		
-		// TODO delete non code -file from unzip path
-		
-		// TODO OnlineCompileAPIService methods to get the answer of the submission
-		
-		// TODO All the files in test cases need to be run in API
-		
-		// TODO delete unzip folder, testcases and code
-		
+		// All the files in test cases need to be run in API
+		for (File testCaseFile : testCaseFiles) {
+
+			String testCaseString = compileAPIService.getJSONValidTestCase(testCaseFile);
+
+			// TODO Get file extension
+			outputList.add(compileAPIService.useJudge0API(jsonValidString, ".java", testCaseString));
+
+		}
+
+		// delete unzip folder, testcases and code
+		try {
+			FileUtils.deleteDirectory(new File(unzipDest));
+			log.debug(log_prepend + " deleted: " + unzipDest);
+		} catch (IOException e) {
+			log.error(log_prepend + " Unable to delete: " + unzipDest);
+		}
+
+		try {
+			FileUtils.deleteDirectory(new File(unzipTestCaseLoc));
+			log.debug(log_prepend + " deleted: " + unzipTestCaseLoc);
+		} catch (IOException e) {
+			log.error(log_prepend + " Unable to delete: " + unzipTestCaseLoc);
+		}
+
 		// Show confirmation to students of submitted file
 		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);
 		List<String> writeupFileNames = submission.getFileNames(submission.writeupFileType);
 
 		model.addAttribute("codeFileNames", codeFileNames);
 		model.addAttribute("writeupFileNames", writeupFileNames);
+		model.addAttribute("outputList", outputList);
 
 		log.debug(log_prepend + "Displaying: student-confirmation");
 		return "student-confirmation";

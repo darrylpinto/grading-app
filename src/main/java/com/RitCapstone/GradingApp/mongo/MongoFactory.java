@@ -24,7 +24,7 @@ public class MongoFactory {
 	private static Logger log = Logger.getLogger(MongoFactory.class);
 	private static String log_prepend = String.format("[%s]", "MongoFactory");
 
-	public final static String mongoClient_JSON = "mongoClient.json";
+	public final static String mongoClientJSON = "mongoClient.json";
 
 	private static MongoClient mongo;
 
@@ -44,7 +44,7 @@ public class MongoFactory {
 
 		if (DATABASE_NAME == null) {
 			ClassLoader classLoader = MongoFactory.class.getClassLoader();
-			File file = new File(classLoader.getResource(mongoClient_JSON).getFile());
+			File file = new File(classLoader.getResource(mongoClientJSON).getFile());
 			JSONParser parser = new JSONParser();
 
 			try {
@@ -74,7 +74,7 @@ public class MongoFactory {
 		if (mongo == null) {
 
 			ClassLoader classLoader = MongoFactory.class.getClassLoader();
-			File file = new File(classLoader.getResource(mongoClient_JSON).getFile());
+			File file = new File(classLoader.getResource(mongoClientJSON).getFile());
 
 			JSONParser parser = new JSONParser();
 

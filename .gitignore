@@ -2,7 +2,6 @@ target/
 .classpath
 .settings/
 .project
-src/main/python/_*
-src/main/python/input*
+.pydevproject
 src/main/resources/judge0Response.json
-
+src/main/java/com/RitCapstone/GradingApp/service/temp/

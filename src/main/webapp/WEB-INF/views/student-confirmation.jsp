@@ -33,11 +33,18 @@ body {
   File <b>${fileName}</b> uploaded successfully<br />
 	</c:forEach>
 	<br>
+
+	<c:forEach items="${outputList}" var="output" varStatus="loop">
+  Output ${loop.index}: <b>${output}</b>
+		<br />
+	</c:forEach>
+	<br>
+
 	<form method="post">
 		<input type="submit" value="Submit Code for Another Question" />
 	</form>
-	
-	<form method="post" action="redirectHome" >
+
+	<form method="post" action="redirectHome">
 		<input type="submit" value="Logout" />
 	</form>
 </body>

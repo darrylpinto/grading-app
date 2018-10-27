@@ -89,9 +89,10 @@ public class Submission {
 		List<String> fileNames = new ArrayList<String>();
 		CommonsMultipartFile[] multipartFiles;
 
-		if (type == codeFileType)
+		if (type.equals(codeFileType))
 			multipartFiles = codeFiles;
-		else if (type == writeupFileType)
+		
+		else if (type.equals(writeupFileType))
 			multipartFiles = writeupFiles;
 		else
 			multipartFiles = null;
