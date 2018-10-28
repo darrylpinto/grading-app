@@ -2,12 +2,9 @@ package com.RitCapstone.GradingApp.service;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
@@ -15,7 +12,7 @@ import java.util.Scanner;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.mashape.unirest.http.HttpResponse;
@@ -24,28 +21,17 @@ import com.mashape.unirest.http.Unirest;
 @Service
 public class OnlineCompileAPIService {
 
-	private static final String python_JSON = "pythonCode.json";
-
 	private static Logger log = Logger.getLogger(OnlineCompileAPIService.class);
-	private static String log_prepend = String.format("[%s]", "OnlineCompileAPIService");
+	private static String log_prepend = "[OnlineCompileAPIService]";
 
-	public String getJSONValidStringCode(String dir_name, String mainFileName) throws Exception {
+	@Autowired
+	FileService fileService;
+//	FileService fileService = new FileService(); // for testing only this file
+
+	public String getJSONValidStringCode(String dir_name, String mainFileName, String extension) throws Exception {
 
 		File dir = new File(dir_name);
 		File[] listOfFiles = dir.listFiles();
-
-		// Finding the code language
-		String extension = "";
-		for (File file : listOfFiles) {
-
-			String filename = file.getName();
-			String[] _parts = filename.trim().split("\\.");
-			extension = "." + _parts[_parts.length - 1];
-
-			if (extension.equals(".java") || extension.equals(".cpp")) {
-				break;
-			}
-		}
 
 		String jsonValidCodeString = "";
 		if (extension.equals("")) {
@@ -62,23 +48,20 @@ public class OnlineCompileAPIService {
 	}
 
 	private String combineCPP(File[] listOfFiles) throws IOException {
-		System.out.println("In cpp");
+
 		// We have to separate header files and cpp files
 		List<File> headerFiles = new ArrayList<>();
 		List<File> cppFiles = new ArrayList<>();
 		String output = "";
 
 		for (File file : listOfFiles) {
-			String filename = file.getName();
-			String[] _parts = filename.trim().split("\\.");
-			String extension = "." + _parts[_parts.length - 1];
-
+			String extension = fileService.getExtension(file);
 			if (extension.equals(".h")) {
 				headerFiles.add(file);
 			} else if (extension.equals(".cpp")) {
 				cppFiles.add(file);
 			} else {
-				log.error(log_prepend + " the file supplied is neither .cpp nor .h " + filename);
+				log.error(log_prepend + " the file supplied is neither .cpp nor .h: " + file.getName());
 			}
 		}
 
@@ -86,11 +69,16 @@ public class OnlineCompileAPIService {
 
 		for (File headerFile : headerFiles) {
 			headerFileNames.add(headerFile.getName());
-			Scanner sc = new Scanner(headerFile);
-			sc.useDelimiter("\\Z");
-			String currentFileContent = sc.next();
-			sc.close();
+
+			String line = "";
+			BufferedReader reader = new BufferedReader(new FileReader(headerFile));
+			String currentFileContent = "";
+
+			while ((line = reader.readLine()) != null) {
+				currentFileContent += line + "\n";
+			}
 			output += currentFileContent + "\n";
+			reader.close();
 		}
 
 		for (File cppFile : cppFiles) {
@@ -112,7 +100,7 @@ public class OnlineCompileAPIService {
 			reader.close();
 		}
 
-		output = output.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t");
+		output = output.replace("\\", "\\\\").replace("\"", "\\\"").replace("\t", "\\t").replace("\n", "\\n");
 
 		return output;
 	}
@@ -162,7 +150,7 @@ public class OnlineCompileAPIService {
 			Scanner sc = new Scanner(testCaseFile);
 			sc.useDelimiter("\\Z");
 			String fileOutput = sc.next();
-			fileOutput = fileOutput.replaceAll("\t", "\\\\t").replaceAll("\n", "\\\\n");
+			fileOutput = fileOutput.replace("\t", "\\t").replace("\n", "\\n");
 			sc.close();
 			log.debug(log_prepend + " Test case file converted to JSON Valid String");
 			return fileOutput;
@@ -240,27 +228,27 @@ public class OnlineCompileAPIService {
 			}
 			System.out.println(getResponseJson);
 			String output = (String) getResponseJson.get("stdout");
-			return output;
+			return output.trim();
 
 		} catch (Exception e) {
 			log.error(log_prepend + " Error in useJudge0API(): " + e.getMessage());
-			e.printStackTrace();
 			return null;
 		}
 	}
 
 	public static void main(String args[]) throws Exception {
 
+		System.out.println("hi");
 //		OnlineCompileAPIService api = new OnlineCompileAPIService();
-//		System.out.println("hi");
 //		String code = api.getJSONValidStringCode(
 //				"/home/darryl/eclipse-workspace/grading-app/src/main/java/com/RitCapstone/GradingApp/service/temp",
-//				"MaxRectanglePerimeter");
+//				"MaxRectanglePerimeter",".cpp");
 //		
-//		String _input = api.getJSONValidTestCase(new File("src/main/python/input-2.6"));
+//		System.out.println("@@@"+code+"@@@");
+//		String _input = api.getJSONValidTestCase(new File("/home/darryl/cTestCases/input-2.6"));
 //		String output = api.useJudge0API(code, ".cpp", _input);
 //		System.out.println(output);
-//		System.out.println("bye");
+		System.out.println("bye");
 	}
 
 }

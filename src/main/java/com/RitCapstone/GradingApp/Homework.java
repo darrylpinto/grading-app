@@ -3,9 +3,6 @@ package com.RitCapstone.GradingApp;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-
 public class Homework {
 	
 
@@ -13,6 +10,8 @@ public class Homework {
 	private String[] homeworkOptions;
 
 	private String[] questionOptions;
+	
+	private String[] languageOptions;
 	
 	public Homework() {
 		this.countryOptions = new LinkedHashMap<>();	
@@ -43,6 +42,13 @@ public class Homework {
 		this.questionOptions =new String[options2.size()];
 		this.questionOptions = options2.toArray(this.questionOptions);
 	
+		ArrayList<String> options3 = new ArrayList<>();
+		options3.add(".java");
+		options3.add(".cpp");
+		
+		this.languageOptions = new String[options3.size()];
+		this.languageOptions = options3.toArray(this.languageOptions);
+		
 	}
 
 	public LinkedHashMap<String, String> getCountryOptions() {
@@ -57,4 +63,7 @@ public class Homework {
 		return questionOptions;
 	}
 
+	public String[] getLanguageOptions() {
+		return languageOptions;
+	}
 }

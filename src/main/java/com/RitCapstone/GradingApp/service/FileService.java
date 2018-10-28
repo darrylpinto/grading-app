@@ -274,4 +274,13 @@ public class FileService {
 		return dir.listFiles();
 	}
 
+	public String getExtension(File file) {
+		
+		String filename = file.getName();
+		String[] _parts = filename.trim().split("\\.");
+		String extension = "." + _parts[_parts.length - 1];
+		return extension;
+
+	}
+
 }

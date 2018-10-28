@@ -12,7 +12,6 @@
 .error {
 	color: red
 }
-
 </style>
 
 </head>
@@ -32,7 +31,6 @@
  	  Question: <form:radiobuttons path="question"
 			items="${hw.questionOptions}" />
 		<form:errors path="question" cssClass="error" />
-
 		<br>
 		<br>
 	Code for the Question: <small>(*Max 2 MB combined)</small>
@@ -43,7 +41,12 @@
 		<form:errors path="codeFiles" cssClass="error" />
 		<br>
 		<br>
-	
+	Language:<form:radiobuttons path="language"
+			items="${hw.languageOptions}" />
+		<form:errors path="language" cssClass="error" />
+		<br>
+		<br>
+
 	Write-Up for the Question: 	<br>
 		<!-- TODO READ FROM FILE AND ADD ALLOWED TYPES -->
 		<br>
@@ -56,8 +59,8 @@
 	</form:form>
 	<br>
 	<br>
-	<small>** IF VALIDATION ERROR OCCURS CODE AND WRITE-UP FIELDS NEED
-		TO BE UPLOADED AGAIN</small>
+	<small>** IF VALIDATION ERROR OCCURS CODE AND WRITE-UP FIELDS
+		NEED TO BE UPLOADED AGAIN</small>
 	<br>
 	<br>
 	<br> Part 2/2

@@ -23,6 +23,9 @@ public class Submission {
 	@NotNull(message = "question is required")
 	private String question;
 
+	@NotNull(message = "Select language")
+	private String language;
+
 	private CommonsMultipartFile[] codeFiles;
 
 	private CommonsMultipartFile[] writeupFiles;
@@ -31,19 +34,41 @@ public class Submission {
 		this.username = null;
 		this.homework = null;
 		this.question = null;
+		this.language = null;
 	}
 
 	@Override
 	public String toString() {
 		try {
 			return "Submission [username=" + username + ", homework=" + homework + ", question=" + question
-					+ ", codeFiles=" + Arrays.toString(codeFiles) + ", writeupFiles=" + Arrays.toString(writeupFiles)
-					+ "]";
+					+ ", langauge=" + language + ", codeFiles=" + Arrays.toString(codeFiles) + ", writeupFiles="
+					+ Arrays.toString(writeupFiles) + "]";
 		} catch (NullPointerException e) {
-			return "Submission [username=" + username + ", homework=" + homework + ", question=" + question + "]";
+			return "Submission [username=" + username + ", homework=" + homework + ", question=" + question
+					+ ", langauge=" + language + "]";
 		}
 	}
 
+	public List<String> getFileNames(String type) {
+
+		List<String> fileNames = new ArrayList<String>();
+		CommonsMultipartFile[] multipartFiles;
+
+		if (type.equals(codeFileType))
+			multipartFiles = codeFiles;
+
+		else if (type.equals(writeupFileType))
+			multipartFiles = writeupFiles;
+		else
+			multipartFiles = null;
+
+		for (CommonsMultipartFile multipartFile : multipartFiles) {
+			fileNames.add(multipartFile.getOriginalFilename());
+		}
+		return fileNames;
+
+	}
+	
 	public String getUsername() {
 		return username;
 	}
@@ -84,23 +109,13 @@ public class Submission {
 		this.writeupFiles = writeupFiles;
 	}
 
-	public List<String> getFileNames(String type) {
-
-		List<String> fileNames = new ArrayList<String>();
-		CommonsMultipartFile[] multipartFiles;
-
-		if (type.equals(codeFileType))
-			multipartFiles = codeFiles;
-		
-		else if (type.equals(writeupFileType))
-			multipartFiles = writeupFiles;
-		else
-			multipartFiles = null;
-
-		for (CommonsMultipartFile multipartFile : multipartFiles) {
-			fileNames.add(multipartFile.getOriginalFilename());
-		}
-		return fileNames;
-
+	public String getLanguage() {
+		return language;
 	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	
 }

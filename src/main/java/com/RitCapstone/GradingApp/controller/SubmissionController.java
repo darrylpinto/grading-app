@@ -113,7 +113,7 @@ public class SubmissionController {
 
 		String log_prepend = "[POST /showForm]";
 
-		// we want to ignore Errors on question field
+		// we want to focus on errors on homework and username field
 		List<FieldError> homework_err = bindingResult.getFieldErrors("homework");
 		List<FieldError> username_err = bindingResult.getFieldErrors("username");
 
@@ -178,9 +178,16 @@ public class SubmissionController {
 		}
 
 		log.debug(log_prepend + "Redirecting to showConfirmation");
-		return "redirect:showConfirmation";
+		return "redirect:pleaseWait";
 	}
 
+	@GetMapping("/pleaseWait")
+	public String displayWait() {
+		// This is display the loader
+		return "please-wait";
+	}
+	
+	
 	/**
 	 * Method to display confirmation and list of files submitted Also, files are
 	 * saved on the machine
@@ -195,6 +202,7 @@ public class SubmissionController {
 		String homework = submission.getHomework();
 		String username = submission.getUsername();
 		String question = submission.getQuestion();
+		String language = submission.getLanguage();
 
 		// save the files uploaded my student to local machine
 		String zipPath = fileService.saveFiles(homework, username, question, submission.getCodeFiles(),
@@ -229,30 +237,30 @@ public class SubmissionController {
 		}
 
 		// delete non code-file from unzip dir
-		fileService.deleteNonCodeFiles(unzipDest);
+		boolean deleteNonCodeFiles = fileService.deleteNonCodeFiles(unzipDest);
+
+		if (!deleteNonCodeFiles) {
+			log.error(String.format("%s deleteNonCodeFiles Failed %s: Homework (%s), question (%s)", log_prepend,
+					zipFile, homework, username));
+		}
 
 		// TODO main_file_name needs to be resolved here
 		String jsonValidString = null;
 		try {
-			jsonValidString = compileAPIService.getJSONValidStringCode(unzipDest, "MaxRectanglePerimeter");
+			jsonValidString = compileAPIService.getJSONValidStringCode(unzipDest, "MaxRectanglePerimeter", language);
 		} catch (Exception e) {
 			log.error(log_prepend + " Error in getting json valid string: " + e.getMessage());
 		}
-		System.out.println("~~~~~~~~~" + jsonValidString);
 
 		// Get all the test case files
 		File[] testCaseFiles = fileService.getFiles(unzipTestCaseLoc);
 
 		ArrayList<String> outputList = new ArrayList<>();
-		
+
 		// All the files in test cases need to be run in API
 		for (File testCaseFile : testCaseFiles) {
-
 			String testCaseString = compileAPIService.getJSONValidTestCase(testCaseFile);
-
-			// TODO Get file extension
-			outputList.add(compileAPIService.useJudge0API(jsonValidString, ".java", testCaseString));
-
+			outputList.add(compileAPIService.useJudge0API(jsonValidString, language, testCaseString));
 		}
 
 		// delete unzip folder, testcases and code
@@ -279,6 +287,7 @@ public class SubmissionController {
 		model.addAttribute("outputList", outputList);
 
 		log.debug(log_prepend + "Displaying: student-confirmation");
+
 		return "student-confirmation";
 	}
 
