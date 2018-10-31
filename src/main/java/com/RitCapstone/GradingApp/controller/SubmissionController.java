@@ -25,16 +25,16 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.RitCapstone.GradingApp.FileValidator;
 import com.RitCapstone.GradingApp.Homework;
 import com.RitCapstone.GradingApp.Submission;
 import com.RitCapstone.GradingApp.service.FileService;
 import com.RitCapstone.GradingApp.service.OnlineCompileAPIService;
 import com.RitCapstone.GradingApp.service.SubmissionDBService;
 import com.RitCapstone.GradingApp.service.TestCaseDBService;
+import com.RitCapstone.GradingApp.validator.FileValidator;
 
 @Controller
-@RequestMapping("/submission")
+@RequestMapping("/student")
 @SessionAttributes("submission")
 public class SubmissionController {
 
@@ -81,7 +81,8 @@ public class SubmissionController {
 	public String showForm(Model model) {
 		String log_prepend = "[GET /showForm]";
 		String jspToDisplay = "student-submission";
-
+		
+		// It can contain submission attribute that was added by redirectAttribute
 		if (!model.containsAttribute("submission")) {
 			model.addAttribute("submission", new Submission());
 			log.debug(log_prepend + "adding submission to model");
@@ -261,8 +262,10 @@ public class SubmissionController {
 		for (File testCaseFile : testCaseFiles) {
 			String testCaseString = compileAPIService.getJSONValidTestCase(testCaseFile);
 			outputList.add(compileAPIService.useJudge0API(jsonValidString, language, testCaseString));
+			// TODO Test case passed or not, evaluate the output with testcases
 		}
 
+		
 		// delete unzip folder, testcases and code
 		try {
 			FileUtils.deleteDirectory(new File(unzipDest));

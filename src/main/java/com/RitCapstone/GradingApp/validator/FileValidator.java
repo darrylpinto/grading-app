@@ -1,4 +1,4 @@
-package com.RitCapstone.GradingApp;
+package com.RitCapstone.GradingApp.validator;
 
 import java.io.File;
 import java.io.FileReader;
@@ -15,9 +15,13 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
+import com.RitCapstone.GradingApp.Submission;
+
 @Component
 public class FileValidator implements Validator {
 
+	private final static String fileRestrictionsJson = "fileRestrictions.json";
+	
 	private void validationHelper(String type, CommonsMultipartFile[] files, HashSet<String> extensionSet, long maxSize,
 			String maxSizeString, Errors errors) {
 		long sum = 0;
@@ -50,11 +54,11 @@ public class FileValidator implements Validator {
 	@Override
 	public void validate(Object target, Errors errors) {
 
-		String jsonFile = "fileRestrictions.json";
+
 		Submission submission = (Submission) target;
 
 		ClassLoader classLoader = FileValidator.class.getClassLoader();
-		File file = new File(classLoader.getResource(jsonFile).getFile());
+		File file = new File(classLoader.getResource(fileRestrictionsJson).getFile());
 
 		// File Restrictions are read from JSON
 		JSONParser parser = new JSONParser();

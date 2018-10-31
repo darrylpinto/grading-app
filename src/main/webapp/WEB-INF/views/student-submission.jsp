@@ -29,7 +29,7 @@ body {
 	<p>All the fields are required</p>
 	<form:form modelAttribute="submission" method="post">
 		
- 	RIT CS Username: <form:input path="username" />
+ 	Username: <form:input path="username" placeholder="Enter RIT CS Username"/>
 		<form:errors path="username" cssClass="error" />
 		<br>
 		<br>

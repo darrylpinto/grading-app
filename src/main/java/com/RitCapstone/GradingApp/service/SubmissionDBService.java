@@ -15,7 +15,7 @@ public class SubmissionDBService {
 	SubmissionDAO submissionDAO;
 
 	private static Logger log = Logger.getLogger(SubmissionDBService.class);
-	private static String log_prepend = String.format("[%s]", "SubmissionDBService");
+	private static String log_prepend = "[SubmissionDBService]";
 
 	public String getSubmission(String homework, String username, String question) {
 

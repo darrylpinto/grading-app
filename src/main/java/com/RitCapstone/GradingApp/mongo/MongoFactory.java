@@ -22,7 +22,7 @@ import com.mongodb.gridfs.GridFSInputFile;
 public class MongoFactory {
 
 	private static Logger log = Logger.getLogger(MongoFactory.class);
-	private static String log_prepend = String.format("[%s]", "MongoFactory");
+	private static String log_prepend = "[MongoFactory]";
 
 	public final static String mongoClientJSON = "mongoClient.json";
 

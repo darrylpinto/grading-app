@@ -14,7 +14,7 @@ import com.mongodb.client.MongoCursor;
 public class SubmissionDAOImpl implements SubmissionDAO {
 
 	private static Logger log = Logger.getLogger(SubmissionDAOImpl.class);
-	private static String log_prepend = String.format("[%s]", "SubmissionDAOImpl");
+	private static String log_prepend = "[SubmissionDAOImpl]";
 
 	
 	public String getSubmissionLocation(String homework, String username, String question) {

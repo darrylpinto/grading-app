@@ -15,7 +15,7 @@ public class TestCaseDBService {
 	TestCasesDAO testCasesDAO;
 
 	private static Logger log = Logger.getLogger(TestCaseDBService.class);
-	private static String log_prepend = String.format("[%s]", "TestCaseDBService");
+	private static String log_prepend = "[TestCaseDBService]";
 
 	public boolean getTestCases(String homework, String question, String destLocation) {
 

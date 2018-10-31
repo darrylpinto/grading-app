@@ -26,7 +26,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	private static final String FILE_SYSTEM = "fs";
 
 	private static Logger log = Logger.getLogger(TestCasesDAOImpl.class);
-	private static String log_prepend = String.format("[%s]", "TestCasesDAOImpl");
+	private static String log_prepend = "[TestCasesDAOImpl]";
 
 	@Override
 	public boolean testCaseExists(String homework, String question, String testCaseNumber) {
