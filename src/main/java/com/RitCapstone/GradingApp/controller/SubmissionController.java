@@ -31,7 +31,7 @@ import com.RitCapstone.GradingApp.service.FileService;
 import com.RitCapstone.GradingApp.service.OnlineCompileAPIService;
 import com.RitCapstone.GradingApp.service.SubmissionDBService;
 import com.RitCapstone.GradingApp.service.TestCaseDBService;
-import com.RitCapstone.GradingApp.validator.FileValidator;
+import com.RitCapstone.GradingApp.validator.SubmissionValidator;
 
 @Controller
 @RequestMapping("/student")
@@ -41,7 +41,7 @@ public class SubmissionController {
 	Submission submission;
 
 	@Autowired
-	FileValidator fileValidator;
+	SubmissionValidator submissionValidator;
 
 	@Autowired
 	FileService fileService;
@@ -166,7 +166,7 @@ public class SubmissionController {
 			BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
 
 		String log_prepend = "[POST /showForm2]";
-		fileValidator.validate(submission, bindingResult);
+		submissionValidator.validate(submission, bindingResult);
 		log.debug(log_prepend + "Model:" + model);
 		log.debug(log_prepend + "Submission:" + submission);
 		if (bindingResult.hasErrors()) {

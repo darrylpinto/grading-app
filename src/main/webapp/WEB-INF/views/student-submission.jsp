@@ -28,12 +28,11 @@ body {
 	<h3>ALGORITHMS-GRADING</h3>
 	<p>All the fields are required</p>
 	<form:form modelAttribute="submission" method="post">
-		
- 	Username: <form:input path="username" placeholder="Enter RIT CS Username"/>
+	Username: <form:input path="username"
+			placeholder="Enter RIT CS Username" />
 		<form:errors path="username" cssClass="error" />
 		<br>
-		<br>
- 	 Homework: <form:radiobuttons path="homework"
+		<br>Homework: <form:radiobuttons path="homework"
 			items="${hw.homeworkOptions}" />
 		<form:errors path="homework" cssClass="error" />
 

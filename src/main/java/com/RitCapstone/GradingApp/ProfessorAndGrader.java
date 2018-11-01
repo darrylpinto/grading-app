@@ -13,10 +13,11 @@ public class ProfessorAndGrader {
 	private String password;
 
 	private String incorrectCredentials;
+	// placeholder on the form to inform the user of incorrect credentials
 
 	public ProfessorAndGrader() {
-		this.username = "";
-		this.password = "";
+		this.username = "ib@rit.edu";
+		this.password = "123";
 		this.incorrectCredentials = "";
 	}
 

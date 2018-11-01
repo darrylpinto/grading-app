@@ -18,11 +18,11 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import com.RitCapstone.GradingApp.Submission;
 
 @Component
-public class FileValidator implements Validator {
+public class SubmissionValidator implements Validator {
 
 	private final static String fileRestrictionsJson = "fileRestrictions.json";
 	
-	private void validationHelper(String type, CommonsMultipartFile[] files, HashSet<String> extensionSet, long maxSize,
+	private void validationHelper(String field, CommonsMultipartFile[] files, HashSet<String> extensionSet, long maxSize,
 			String maxSizeString, Errors errors) {
 		long sum = 0;
 		for (CommonsMultipartFile file : files) {
@@ -33,16 +33,16 @@ public class FileValidator implements Validator {
 			String extension = "." + _parts[_parts.length - 1];
 
 			if (size == 0) {
-				errors.rejectValue(type, "missingFile", "No files uploaded");
+				errors.rejectValue(field, "missingFile", "No files uploaded");
 			} else if (!extensionSet.contains(extension)) {
-				errors.rejectValue(type, "incorrectExtension", "Allowed files: " + extensionSet);
+				errors.rejectValue(field, "incorrectExtension", "Allowed files: " + extensionSet);
 			} else {
 				sum += size;
 			}
 
 		}
 		if (sum > maxSize) {
-			errors.rejectValue(type, "largeFile", "Total size of uploads is greater than " + maxSizeString);
+			errors.rejectValue(field, "largeFile", "Total size of uploads is greater than " + maxSizeString);
 		}
 	}
 
@@ -57,7 +57,7 @@ public class FileValidator implements Validator {
 
 		Submission submission = (Submission) target;
 
-		ClassLoader classLoader = FileValidator.class.getClassLoader();
+		ClassLoader classLoader = SubmissionValidator.class.getClassLoader();
 		File file = new File(classLoader.getResource(fileRestrictionsJson).getFile());
 
 		// File Restrictions are read from JSON

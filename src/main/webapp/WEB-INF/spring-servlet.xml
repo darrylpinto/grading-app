@@ -11,13 +11,13 @@
     	http://www.springframework.org/schema/mvc
         http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-	<!-- Step 3: Add support for component scanning -->
+	<!-- Add support for component scanning -->
 	<context:component-scan
 		base-package="com.RitCapstone.GradingApp" />
 
 	<mvc:annotation-driven />
 
-	<!-- Step 5: Define Spring MVC view resolver -->
+	<!-- Define Spring MVC view resolver -->
 	<bean
 		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
 		<property name="prefix" value="/WEB-INF/views/" />
@@ -31,12 +31,14 @@
 		<property name="maxUploadSize" value="50000000" /> <!-- 50 MB -->
 	</bean>
 
-	<bean id="messageSource"
-		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
-
-		<property name="basename">
-			<value>validation</value>
+	<!-- Register the messages.properties -->
+	<bean
+		class="org.springframework.context.support.ResourceBundleMessageSource"
+		id="messageSource">
+		<property name="basenames">
+			<list>
+				<value>messages</value>
+			</list>
 		</property>
 	</bean>
-
 </beans>
