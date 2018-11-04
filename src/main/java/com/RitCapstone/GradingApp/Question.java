@@ -2,16 +2,12 @@ package com.RitCapstone.GradingApp;
 
 import java.util.Arrays;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 public class Question {
 
-	@NotNull(message = "Question number is required")
-	@Min(value= 1, message = "Question number should get greater than zero")	
 	private Integer questionNumber;
 
 	private String questionDescription;

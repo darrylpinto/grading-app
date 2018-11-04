@@ -1,26 +1,26 @@
 package com.RitCapstone.GradingApp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-
 public class Homework {
 
 	@NotBlank(message = "Homework name is required")
 	private String id;
 
-	@Min(value = 1,message = "Number of questions should be greater than zero")
+	@Min(value = 1, message = "Number of questions should be greater than zero")
 	private Integer numberOfQuestions;
 
 	@NotNull(message = "Due date is required")
 	private Date dueDate;
-	
+
 	private Question[] questions;
-	
+
 	private String[] homeworkOptions;
 
 	private String[] questionOptions;
@@ -36,8 +36,8 @@ public class Homework {
 //		this.countryOptions.put("UK", "United Kingdom");
 
 		this.id = "";
-		this.numberOfQuestions = 0;
-		
+		this.questions = null;
+
 		ArrayList<String> options1 = new ArrayList<>();
 		options1.add("hw0");
 		options1.add("hw1");
@@ -67,12 +67,25 @@ public class Homework {
 
 	}
 
-	
-	@Override
-	public String toString() {
-		return "Homework [id=" + id + ", numberOfQuestions=" + numberOfQuestions + ", dueDate=" + dueDate + "]";
+	public void addQuestion(Question q) {
+
+		if (this.questions == null) {
+			this.questions = new Question[1];
+			this.questions[0] = q;
+
+		} else {
+			int newLength = this.questions.length + 1;
+			this.questions = Arrays.copyOf(this.questions, newLength);
+			this.questions[newLength - 1] = q;
+		}
+
 	}
 
+	@Override
+	public String toString() {
+		return "Homework [id=" + id + ", numberOfQuestions=" + numberOfQuestions + ", dueDate=" + dueDate
+				+ ", questions=" + Arrays.toString(questions) + "]";
+	}
 
 	public String getId() {
 		return id;
@@ -102,11 +115,9 @@ public class Homework {
 		return questions;
 	}
 
-
 	public void setQuestions(Question[] questions) {
 		this.questions = questions;
 	}
-
 
 	public String[] getHomeworkOptions() {
 		return homeworkOptions;

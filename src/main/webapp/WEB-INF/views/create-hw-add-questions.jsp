@@ -33,13 +33,8 @@ body {
 	<form:form modelAttribute="question" enctype="multipart/form-data"
 		method="post">
 
-		<br>Question number:
-				<form:input path="questionNumber"
-			placeholder="Enter question number" />
+		<br>Question number: ${currentQuestion}
 		<br>
-		<form:errors path="questionNumber" cssClass="error" />
-		<br>
-
 		<br>Problem name:
 				<form:input path="problemName" placeholder="Enter problem Name" />
 		<br>
