@@ -1,6 +1,7 @@
 package com.RitCapstone.GradingApp;
 
 import java.util.Arrays;
+import java.util.List;
 
 import javax.validation.constraints.NotBlank;
 
@@ -20,6 +21,10 @@ public class Question {
 	private CommonsMultipartFile[] testCases;
 
 	private CommonsMultipartFile[] outputTestCases;
+
+	private List<String> testCaseNames;
+
+	private List<String> outputTestCaseNames;
 
 	public Question() {
 	}
@@ -69,6 +74,22 @@ public class Question {
 
 	public void setOutputTestCases(CommonsMultipartFile[] outputTestCases) {
 		this.outputTestCases = outputTestCases;
+	}
+
+	public List<String> getTestCaseNames() {
+		return testCaseNames;
+	}
+
+	public void setTestCaseNames(List<String> testCaseNames) {
+		this.testCaseNames = testCaseNames;
+	}
+
+	public List<String> getOutputTestCaseNames() {
+		return outputTestCaseNames;
+	}
+
+	public void setOutputTestCaseNames(List<String> outputTestCaseNames) {
+		this.outputTestCaseNames = outputTestCaseNames;
 	}
 
 }

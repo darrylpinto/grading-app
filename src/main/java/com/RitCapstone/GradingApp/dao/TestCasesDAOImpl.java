@@ -60,7 +60,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	}
 
 	@Override
-	public boolean getTestCaseFiles(String homework, String question, String destLocation) {
+	public boolean getTestCaseFilesToLocal(String homework, String question, String destLocation) {
 
 		log.info(String.format("%s Retrieving testCases, Homework (%s), question (%s)", log_prepend, homework,
 				question));
@@ -89,19 +89,25 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 				while (cursor.hasNext()) {
 
 					Document doc = cursor.next();
-					String fileName = doc.get("fileName", String.class);
-					GridFSDBFile DBFile = gfs.findOne(fileName);
+					String inputFileName = doc.get("inputFileName", String.class);
+					GridFSDBFile DBFileInput = gfs.findOne(inputFileName);
+
+					String outputFileName = doc.get("outputFileName", String.class);
+					GridFSDBFile DBFileOutput = gfs.findOne(inputFileName);
 
 					new File(destLocation).mkdirs();
 
-					String path;
+					String pathInput, pathOutput;
 					if (destLocation.endsWith(File.separator)) {
-						path = destLocation + fileName;
+						pathInput = destLocation + inputFileName;
+						pathOutput = destLocation + outputFileName;
 					} else {
-						path = destLocation + File.separator + fileName;
+						pathInput = destLocation + File.separator + inputFileName;
+						pathOutput = destLocation + File.separator + outputFileName;
 					}
 
-					DBFile.writeTo(path);
+					DBFileInput.writeTo(pathInput);
+					DBFileOutput.writeTo(pathOutput);
 					count++;
 				}
 				log.info(String.format("%s %d testCaseFiles saved to %s: Homework (%s), question (%s)", log_prepend,
@@ -118,7 +124,8 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	}
 
 	@Override
-	public boolean createTestCase(String homework, String question, String testCaseNumber, File testcaseFile) {
+	public boolean createTestCase(String homework, String question, String testCaseNumber, File testcaseInput,
+			File testcaseOutput) {
 
 		log.info(String.format("%s Creating new testCase, Homework (%s), question (%s), testCaseNumber (%s)",
 				log_prepend, homework, question, testCaseNumber));
@@ -148,21 +155,27 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 
 				// Save file to GridFS
 				DB db = MongoFactory.getDB(databaseName);
-				String newFileName = String.format("%s_%s_%s", homework, question, testCaseNumber);
+				String inputFileName = String.format("%s_%s_%s_input", homework, question, testCaseNumber);
+				String outputFileName = String.format("%s_%s_%s_output", homework, question, testCaseNumber);
 
 				GridFS gfs = new GridFS(db, FILE_SYSTEM);
-				GridFSInputFile gfsFile = gfs.createFile(testcaseFile);
+				GridFSInputFile gfsInputFile = gfs.createFile(testcaseInput);
+				GridFSInputFile gfsOutputFile = gfs.createFile(testcaseOutput);
 
-				gfsFile.setFilename(newFileName);
-				gfsFile.save();
+				gfsInputFile.setFilename(inputFileName);
+				gfsInputFile.save();
+				map.put("inputFileName", inputFileName);
 
-				map.put("fileName", newFileName);
+				gfsOutputFile.setFilename(outputFileName);
+				gfsOutputFile.save();
+				map.put("outputFileName", outputFileName);
+
 				Document doc = new Document(map);
 				collection.insertOne(doc);
 
 				log.info(String.format(
 						"%s created new TestCaseNumber Document [fileName: %s]: Homework (%s), question (%s), testCaseNumber (%s)",
-						log_prepend, newFileName, homework, question, testCaseNumber));
+						log_prepend, inputFileName, homework, question, testCaseNumber));
 				return true;
 			}
 		} catch (Exception e) {
@@ -173,39 +186,59 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	}
 
 	@Override
-	public boolean updateTestCase(String homework, String question, String testCaseNumber, File testcaseFile) {
+	public boolean updateTestCase(String homework, String question, String testCaseNumber, File testcaseInput,
+			File testcaseOutput) {
 
 		log.info(String.format("%s Updating testCase, Homework (%s), question (%s), testCaseNumber (%s)", log_prepend,
 				homework, question, testCaseNumber));
 
+		String inputFileName = String.format("%s_%s_%s_input", homework, question, testCaseNumber);
+		String outputFileName = String.format("%s_%s_%s_output", homework, question, testCaseNumber);
+
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("homework", homework);
+		map.put("question", question);
+		map.put("testCaseNumber", testCaseNumber);
+
 		String databaseName = MongoFactory.getDatabaseName();
-		String newFileName = String.format("%s_%s_%s", homework, question, testCaseNumber);
+
+		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, testCaseCollection);
+		BasicDBObject searchQuery = new BasicDBObject(map);
+
+		FindIterable<Document> findIterable = collection.find(searchQuery);
+		MongoCursor<Document> cursor = findIterable.iterator();
+
+		if (!cursor.hasNext()) {
+			log.error(String.format(
+					"%s TestCaseNumber Document does not exist: Homework (%s), question (%s), testCaseNumber (%s)",
+					log_prepend, homework, question, testCaseNumber));
+			return false;
+		}
 		try {
 
 			// Retrieve file from GridFS and Delete it
 			DB db = MongoFactory.getDB(databaseName);
 
 			GridFS gfs = new GridFS(db, FILE_SYSTEM);
-			gfs.remove(newFileName);
+			gfs.remove(inputFileName);
+			gfs.remove(outputFileName);
 			// oldFileName will be the same as newFileName as logic for naming files is
-			// homework_question_testCaseNumber
+			// homework_question_testCaseNumber_[input or output]
 
-			log.debug(log_prepend + " stale testCaseFile removed");
+			log.debug(log_prepend + " stale testCaseFiles removed");
 
-			GridFSInputFile gfsFile = gfs.createFile(testcaseFile);
-			gfsFile.setFilename(newFileName);
-			gfsFile.save();
-			log.debug(log_prepend + " added new testCaseFile: " + newFileName);
+			GridFSInputFile gfsInputFile = gfs.createFile(testcaseInput);
+			gfsInputFile.setFilename(inputFileName);
+			gfsInputFile.save();
 
-			MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, testCaseCollection);
-
-			BasicDBObject searchQuery = new BasicDBObject();
-			searchQuery.put("homework", homework);
-			searchQuery.put("question", question);
-			searchQuery.put("testCaseNumber", testCaseNumber);
+			GridFSInputFile gfsOutputFile = gfs.createFile(testcaseOutput);
+			gfsOutputFile.setFilename(outputFileName);
+			gfsOutputFile.save();
+			log.debug(log_prepend + " added new testCaseFiles: " + inputFileName + ", " + outputFileName);
 
 			BasicDBObject newDocument = new BasicDBObject();
-			newDocument.put("fileName", newFileName);
+			newDocument.put("inputFileName", inputFileName);
+			newDocument.put("outputFileName", outputFileName);
 
 			BasicDBObject updateObject = new BasicDBObject();
 			updateObject.put("$set", newDocument);
@@ -220,11 +253,13 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			return false;
 		}
 	}
-	
+
 	public static void main(String[] args) {
 		System.out.println("hi");
-		File f = new File("/home/darryl/_testCases/input-2.4");
-		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", "4", f);
+		String c= "6";
+		File fin = new File("/home/darryl/cTestCases/input-2."+c);
+		File fout = new File("/home/darryl/cTestCases/answer-2."+c);
+		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", c, fin, fout);
 		System.out.println(created);
 	}
 

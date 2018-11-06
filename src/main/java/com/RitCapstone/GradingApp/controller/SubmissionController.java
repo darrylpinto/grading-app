@@ -3,6 +3,7 @@ package com.RitCapstone.GradingApp.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -81,7 +82,7 @@ public class SubmissionController {
 	public String showForm(Model model) {
 		String log_prepend = "[GET /showForm]";
 		String jspToDisplay = "student-submission";
-		
+
 		// It can contain submission attribute that was added by redirectAttribute
 		if (!model.containsAttribute("submission")) {
 			model.addAttribute("submission", new Submission());
@@ -187,8 +188,7 @@ public class SubmissionController {
 		// This is display the loader
 		return "please-wait";
 	}
-	
-	
+
 	/**
 	 * Method to display confirmation and list of files submitted Also, files are
 	 * saved on the machine
@@ -206,7 +206,7 @@ public class SubmissionController {
 		String language = submission.getLanguage();
 
 		// save the files uploaded my student to local machine
-		String zipPath = fileService.saveFiles(homework, username, question, submission.getCodeFiles(),
+		String zipPath = fileService.saveStudentSubmission(homework, username, question, submission.getCodeFiles(),
 				submission.getWriteupFiles());
 
 		// save the information of homework, question, username, and submission location
@@ -246,9 +246,10 @@ public class SubmissionController {
 		}
 
 		// TODO main_file_name needs to be resolved here
+		String mainFileName = "MaxRectanglePerimeter";
 		String jsonValidString = null;
 		try {
-			jsonValidString = compileAPIService.getJSONValidStringCode(unzipDest, "MaxRectanglePerimeter", language);
+			jsonValidString = compileAPIService.getJSONValidStringCode(unzipDest, mainFileName, language);
 		} catch (Exception e) {
 			log.error(log_prepend + " Error in getting json valid string: " + e.getMessage());
 		}
@@ -256,16 +257,32 @@ public class SubmissionController {
 		// Get all the test case files
 		File[] testCaseFiles = fileService.getFiles(unzipTestCaseLoc);
 
+		// Segregate input and output files
+		ArrayList<File> inputTestCaseFiles = new ArrayList<>();
+		ArrayList<File> outputTestCaseFiles = new ArrayList<>();
 		ArrayList<String> outputList = new ArrayList<>();
-
-		// All the files in test cases need to be run in API
+		
 		for (File testCaseFile : testCaseFiles) {
+
+			if (testCaseFile.getName().contains("input"))
+				inputTestCaseFiles.add(testCaseFile);
+			else if (testCaseFile.getName().contains("output"))
+				outputTestCaseFiles.add(testCaseFile);
+			else
+				System.out.println("******* SHOULD NOT ENTER HERE *****");
+		}
+
+		Collections.sort(inputTestCaseFiles);
+		Collections.sort(outputTestCaseFiles);
+		
+		// All the files in test cases need to be run in API
+		for (File testCaseFile : inputTestCaseFiles) {
 			String testCaseString = compileAPIService.getJSONValidTestCase(testCaseFile);
 			outputList.add(compileAPIService.useJudge0API(jsonValidString, language, testCaseString));
 			// TODO Test case passed or not, evaluate the output with testcases
+			
 		}
 
-		
 		// delete unzip folder, testcases and code
 		try {
 			FileUtils.deleteDirectory(new File(unzipDest));

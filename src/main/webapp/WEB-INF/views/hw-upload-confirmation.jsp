@@ -19,9 +19,17 @@
 	<br> Question number: ${question.questionNumber}
 	<br> Question Description: ${question.questionDescription}
 	<br> Problem Name: ${question.problemName}
-	<br> test case inputs: uploaded
-	<br> test case outputs: uploaded
+	<br> test case inputs:
+	<br>
+	<c:forEach items="${question.testCaseNames}" var="fileName">
+		File <b>${fileName}</b> uploaded successfully<br />
+	</c:forEach>
 
+	<br> test case outputs:
+	<br>
+	<c:forEach items="${question.outputTestCaseNames}" var="fileName">
+		File <b>${fileName}</b> uploaded successfully<br />
+	</c:forEach>
 	<br>
 	<br>
 
@@ -49,5 +57,6 @@
 			</form:form>
 		</c:otherwise>
 	</c:choose>
+
 </body>
 </html>

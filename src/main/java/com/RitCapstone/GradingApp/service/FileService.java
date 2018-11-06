@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.zip.ZipEntry;
@@ -34,7 +35,7 @@ public class FileService {
 	private static final String fileRestrictionJSON = "fileRestrictions.json";
 
 	private static final String DIRECTORY_TO_SAVE = "uploads_from_springMVC";
-	private static final String chosen_dir = System.getProperty("user.dir") + File.separator + DIRECTORY_TO_SAVE
+	private static final String chosenDir = System.getProperty("user.dir") + File.separator + DIRECTORY_TO_SAVE
 			+ File.separator;
 
 	/**
@@ -110,10 +111,10 @@ public class FileService {
 	 * @param writeupFiles writeup files that are uploaded
 	 * @return path of the zipped file
 	 */
-	public String saveFiles(String homework, String username, String question, CommonsMultipartFile[] codeFiles,
-			CommonsMultipartFile[] writeupFiles) {
+	public String saveStudentSubmission(String homework, String username, String question,
+			CommonsMultipartFile[] codeFiles, CommonsMultipartFile[] writeupFiles) {
 
-		String currentPath = chosen_dir + homework + File.separator + username + File.separator + question
+		String currentPath = chosenDir + homework + File.separator + username + File.separator + question
 				+ File.separator;
 
 		File destinationDir = new File(currentPath);
@@ -124,12 +125,12 @@ public class FileService {
 			try {
 
 				// Should not have entered here as we delete the folder after zipping
-				log.warn(log_prepend + " " + destinationDir.getAbsolutePath() + " exists!! Deleting it");
+				log.warn(log_prepend + " " + destinationDir.getAbsolutePath()
+						+ " exists!! Deleting it [Should not have entered here]");
 				FileUtils.deleteDirectory(destinationDir);
 
 			} catch (IOException e) {
-				log.error(log_prepend + " Error deleting " + destinationDir.getName());
-				e.printStackTrace();
+				log.error(log_prepend + " Error deleting " + destinationDir.getName() + " : " + e.getMessage());
 			}
 
 		}
@@ -140,24 +141,55 @@ public class FileService {
 
 		CommonsMultipartFile[] files = (CommonsMultipartFile[]) ArrayUtils.addAll(codeFiles, writeupFiles);
 		for (CommonsMultipartFile file : files) {
-			try {
 
+			try {
 				// Copy the uploaded file to local machine
 				FileCopyUtils.copy(file.getBytes(), new File(currentPath + file.getOriginalFilename()));
 
 			} catch (IOException e) {
+				log.error(log_prepend + " Error copying uploaded files to local: " + e.getMessage());
+			} catch (IllegalStateException e) {
+				log.error(log_prepend + " Error copying uploaded files to local: " + e.getMessage());
 				e.printStackTrace();
 			}
 		}
 
-		String zipFileDest = chosen_dir + homework + File.separator + username + File.separator;
+		String zipFileDest = chosenDir + homework + File.separator + username + File.separator;
 		try {
 			zip(currentPath, question + ".zip", zipFileDest);
 		} catch (IOException e) {
-			log.error(log_prepend + "" + e.getMessage());
+			log.error(log_prepend + " Error zipping the student submission: " + e.getMessage());
 		}
 		return zipFileDest;
 
+	}
+
+	public String saveTestCasesToLocal(CommonsMultipartFile[] testCases, CommonsMultipartFile[] outputTestCases) {
+		int count;
+		String testCasePath = chosenDir + ".testCases" + File.separator;
+		new File(testCasePath).mkdirs();
+
+		count = 1;
+		for (CommonsMultipartFile file : testCases) {
+			try {
+
+				FileCopyUtils.copy(file.getBytes(), new File(testCasePath + "input_" + count++));
+
+			} catch (IOException e) {
+				log.error(log_prepend + " Error saving INPUT test cases to local: " + e.getMessage());
+			}
+		}
+		count = 1;
+		for (CommonsMultipartFile file : outputTestCases) {
+			try {
+
+				FileCopyUtils.copy(file.getBytes(), new File(testCasePath + "output_" + count++));
+
+			} catch (IOException e) {
+				log.error(log_prepend + " Error saving OUTPUT test cases to local: " + e.getMessage());
+			}
+		}
+		return testCasePath;
 	}
 
 	/**
@@ -274,8 +306,19 @@ public class FileService {
 		return dir.listFiles();
 	}
 
+	public ArrayList<String> getMultipartFileNames(CommonsMultipartFile[] files) {
+
+		ArrayList<String> names = new ArrayList<>();
+
+		for (CommonsMultipartFile multipartFile : files) {
+			names.add(multipartFile.getOriginalFilename());
+		}
+
+		return names;
+	}
+
 	public String getExtension(File file) {
-		
+
 		String filename = file.getName();
 		String[] _parts = filename.trim().split("\\.");
 		String extension = "." + _parts[_parts.length - 1];

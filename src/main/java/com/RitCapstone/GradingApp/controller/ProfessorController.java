@@ -1,11 +1,13 @@
 package com.RitCapstone.GradingApp.controller;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
 import javax.validation.Valid;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
@@ -27,6 +29,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.RitCapstone.GradingApp.Homework;
 import com.RitCapstone.GradingApp.ProfessorAndGrader;
 import com.RitCapstone.GradingApp.Question;
+import com.RitCapstone.GradingApp.service.FileService;
+import com.RitCapstone.GradingApp.service.TestCaseDBService;
 import com.RitCapstone.GradingApp.validator.AuthenticationValidator;
 import com.RitCapstone.GradingApp.validator.TestCaseValidator;
 
@@ -42,6 +46,12 @@ public class ProfessorController {
 
 	@Autowired
 	TestCaseValidator testCasevalidator;
+
+	@Autowired
+	FileService fileService;
+
+	@Autowired
+	TestCaseDBService testCaseDBService;
 
 	/**
 	 * This method will trim all the strings received from form data
@@ -168,7 +178,6 @@ public class ProfessorController {
 		testCasevalidator.validate(question, bindingResult);
 		if (bindingResult.hasErrors()) {
 
-//			redirectAttributes.addFlashAttribute("question", question);
 			redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.question",
 					bindingResult);
 
@@ -177,7 +186,6 @@ public class ProfessorController {
 		}
 
 		log.debug(log_prepend + "Redirecting to /showConfirmation");
-//		redirectAttributes.addFlashAttribute("question", question);
 		return "redirect:showConfirmProcessing";
 
 	}
@@ -186,8 +194,18 @@ public class ProfessorController {
 	public String showConfirmProcessing(@SessionAttribute("homework") Homework homework,
 			@SessionAttribute("currentQuestion") int currentQuestion, Map<String, Object> model,
 			RedirectAttributes redirectAttributes) {
+
+		String log_prepend = "[GET /showConfirmProcessing]";
+
 		Question question = (Question) model.get("question");
+		int numberOfTestCases = question.getTestCases().length;
+
 		question.setQuestionNumber(currentQuestion);
+
+		// add question names
+		question.setTestCaseNames(fileService.getMultipartFileNames(question.getTestCases()));
+		question.setOutputTestCaseNames(fileService.getMultipartFileNames(question.getOutputTestCases()));
+
 		homework.addQuestion(question);
 
 		// update the session attribute
@@ -195,16 +213,31 @@ public class ProfessorController {
 		model.put("currentQuestion", currentQuestion);
 		model.put("question", question);
 
+		log.info(log_prepend + " testCaseInput:" + model.get("testCaseInput"));
+		log.info(log_prepend + " testCaseOutput:" + model.get("testCaseOutput"));
+
+		// Save uploaded test cases to local
+		String testCaseLoc = fileService.saveTestCasesToLocal(question.getTestCases(), question.getOutputTestCases());
+		log.info(log_prepend + " Saved uploaded files to local at location: " + testCaseLoc);
+
 		// TODO Save files to MongoDB
-
-		// TODO add to model homework details and question details
-
+		for (int i = 1; i <= numberOfTestCases; i++) {
+			File testcaseInput = new File(testCaseLoc + "input_" + i);
+			File testcaseOutput = new File(testCaseLoc + "output_" + i);
+			testCaseDBService.saveTestCases(homework.getId(), "" + question.getQuestionNumber(), "" + i, testcaseInput,
+					testcaseOutput);
+		}
+		// Delete testCaseLoc
+		FileUtils.deleteQuietly(new File(testCaseLoc));
+		log.info(log_prepend + "MODEL:" + model);
 		return "redirect:showConfirmation";
 	}
 
 	// Post - redirect - get pattern
 	@GetMapping("/showConfirmation")
-	public String showConfirmation() {
+	public String showConfirmation(Map<Object, String> model) {
+		model.put("testCaseInput", model.get("testCaseInput"));
+		model.put("testCaseOutput", model.get("testCaseInput"));
 		return "hw-upload-confirmation";
 	}
 
@@ -213,11 +246,11 @@ public class ProfessorController {
 			Map<String, Object> model) {
 
 		String log_prepend = "[GET /createHomeworkNextQuestion]";
-		
+
 		if (!model.containsKey("org.springframework.validation.BindingResult.question")) {
-			model.put("question", new Question());	
+			model.put("question", new Question());
 		}
-		
+
 		String jspToDisplay = "create-hw-add-questions";
 		log.debug(log_prepend + "Displaying " + jspToDisplay);
 		log.debug(log_prepend + "Model: " + model);

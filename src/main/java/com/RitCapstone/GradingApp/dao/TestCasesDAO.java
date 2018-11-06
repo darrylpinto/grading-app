@@ -4,11 +4,11 @@ import java.io.File;
 
 public interface TestCasesDAO {
 
-	public boolean getTestCaseFiles(String homework, String question, String destLocation);
+	public boolean getTestCaseFilesToLocal(String homework, String question, String destLocation);
 
-	public boolean createTestCase(String homework, String question, String testCaseNumber, File testcaseFile);
+	public boolean createTestCase(String homework, String question, String testCaseNumber, File testcaseInput, File testcaseOutput);
 
-	public boolean updateTestCase(String homework, String question, String testCaseNumber, File testcaseFile);
+	public boolean updateTestCase(String homework, String question, String testCaseNumber, File testcaseInput, File testcaseOutput);
 	
 	public boolean testCaseExists(String homework, String question, String testCaseNumber);
 

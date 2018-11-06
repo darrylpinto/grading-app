@@ -28,7 +28,9 @@
 		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
 
 		<!-- one of the properties available; the maximum file size in bytes -->
-		<property name="maxUploadSize" value="50000000" /> <!-- 50 MB -->
+		<property name="maxUploadSize" value="20971520" /> <!-- 20 MB -->
+		<property name="maxInMemorySize" value="5242880" /> <!-- 5 MB -->
+
 	</bean>
 
 	<!-- Register the messages.properties -->
@@ -42,3 +44,5 @@
 		</property>
 	</bean>
 </beans>
+
+
