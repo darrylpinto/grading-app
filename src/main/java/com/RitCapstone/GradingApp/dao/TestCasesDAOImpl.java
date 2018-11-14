@@ -44,11 +44,11 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			MongoCursor<Document> cursor = findIterable.iterator();
 
 			if (!cursor.hasNext()) {
-				log.warn(String.format("%s No testCaseFile found: Homework (%s), question (%s) testCaseNumber (%s)",
+				log.info(String.format("%s No testCaseFile found: Homework (%s), question (%s) testCaseNumber (%s)",
 						log_prepend, homework, question, testCaseNumber));
 				return false;
 			} else {
-				log.debug(String.format("%s TestCases Found: : Homework (%s), question (%s) testCaseNumber (%s)",
+				log.info(String.format("%s TestCases Found: : Homework (%s), question (%s) testCaseNumber (%s)",
 						log_prepend, homework, question, testCaseNumber));
 				return true;
 			}
@@ -146,7 +146,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			MongoCursor<Document> cursor = findIterable.iterator();
 
 			if (cursor.hasNext()) {
-				log.error(String.format(
+				log.warn(String.format(
 						"%s TestCaseNumber Document already exists: Homework (%s), question (%s), testCaseNumber (%s)",
 						log_prepend, homework, question, testCaseNumber));
 				return false;
@@ -254,13 +254,63 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 		}
 	}
 
+	@Override
+	public boolean deleteTestCases(String homework, String question) {
+
+		log.info(String.format("%s Deleting testCases with Homework (%s), question (%s)", log_prepend, homework,
+				question));
+
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("homework", homework);
+		map.put("question", question);
+		String databaseName = MongoFactory.getDatabaseName();
+
+		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, testCaseCollection);
+		BasicDBObject searchQuery = new BasicDBObject(map);
+		FindIterable<Document> findIterable = collection.find(searchQuery);
+		MongoCursor<Document> cursor = findIterable.iterator();
+
+		if (!cursor.hasNext()) // Nothing to delete
+			return true;
+
+		try {
+			DB db = MongoFactory.getDB(databaseName);
+
+			while (cursor.hasNext()) {
+				Document doc = cursor.next();
+				System.out.println(doc);
+
+				String inputFileName = doc.get("inputFileName", String.class);
+				String outputFileName = doc.get("outputFileName", String.class);
+
+				// delete files from FILE_SYSTEM collection
+				GridFS gfs = new GridFS(db, FILE_SYSTEM);
+				gfs.remove(gfs.findOne(inputFileName));
+				gfs.remove(gfs.findOne(outputFileName));
+
+				// delete records from testCase collection
+				collection.deleteOne(doc);
+			}
+
+			return true;
+
+		} catch (Exception e) {
+			log.error(log_prepend + " Error while deleting testCases: " + e.getMessage());
+			return false;
+		}
+
+	}
+
 	public static void main(String[] args) {
 		System.out.println("hi");
-		String c= "6";
-		File fin = new File("/home/darryl/cTestCases/input-2."+c);
-		File fout = new File("/home/darryl/cTestCases/answer-2."+c);
+		String c = "6";
+		File fin = new File("/home/darryl/cTestCases/input-2." + c);
+		File fout = new File("/home/darryl/cTestCases/answer-2." + c);
 		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", c, fin, fout);
 		System.out.println(created);
+
+//		System.out.println(new TestCasesDAOImpl().deleteTestCases("h2b", "1"));
+		System.out.println("bye");
 	}
 
 }

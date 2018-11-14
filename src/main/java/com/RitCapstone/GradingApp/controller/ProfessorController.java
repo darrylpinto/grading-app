@@ -30,6 +30,7 @@ import com.RitCapstone.GradingApp.Homework;
 import com.RitCapstone.GradingApp.ProfessorAndGrader;
 import com.RitCapstone.GradingApp.Question;
 import com.RitCapstone.GradingApp.service.FileService;
+import com.RitCapstone.GradingApp.service.QuestionMetadataService;
 import com.RitCapstone.GradingApp.service.TestCaseDBService;
 import com.RitCapstone.GradingApp.validator.AuthenticationValidator;
 import com.RitCapstone.GradingApp.validator.TestCaseValidator;
@@ -45,13 +46,16 @@ public class ProfessorController {
 	AuthenticationValidator authValidator;
 
 	@Autowired
-	TestCaseValidator testCasevalidator;
+	TestCaseValidator testCaseValidator;
 
 	@Autowired
 	FileService fileService;
 
 	@Autowired
 	TestCaseDBService testCaseDBService;
+
+	@Autowired
+	QuestionMetadataService questionService;
 
 	/**
 	 * This method will trim all the strings received from form data
@@ -175,7 +179,7 @@ public class ProfessorController {
 
 		log.debug(log_prepend + "bindingResult: " + bindingResult);
 
-		testCasevalidator.validate(question, bindingResult);
+		testCaseValidator.validate(question, bindingResult);
 		if (bindingResult.hasErrors()) {
 
 			redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.question",
@@ -220,16 +224,28 @@ public class ProfessorController {
 		String testCaseLoc = fileService.saveTestCasesToLocal(question.getTestCases(), question.getOutputTestCases());
 		log.info(log_prepend + " Saved uploaded files to local at location: " + testCaseLoc);
 
-		// TODO Save files to MongoDB
+		String hwId = homework.getId();
+		String questionNumber = "" + question.getQuestionNumber();
+
+		// Save questionMetaData in MongoDB
+		questionService.saveMetadata(hwId, questionNumber, question.getProblemName(), question.getQuestionDescription(),
+				homework.getDueDate());
+		
+		System.out.println("SAVED METADATA");
+
+		// Delete previous test case files from MongoDB
+		testCaseDBService.deleteTestCases(hwId, questionNumber);
+
+		// Save files to MongoDB
 		for (int i = 1; i <= numberOfTestCases; i++) {
 			File testcaseInput = new File(testCaseLoc + "input_" + i);
 			File testcaseOutput = new File(testCaseLoc + "output_" + i);
-			testCaseDBService.saveTestCases(homework.getId(), "" + question.getQuestionNumber(), "" + i, testcaseInput,
-					testcaseOutput);
+
+			String testCase = "" + i;
+			testCaseDBService.saveTestCase(hwId, questionNumber, testCase, testcaseInput, testcaseOutput);
 		}
 		// Delete testCaseLoc
 		FileUtils.deleteQuietly(new File(testCaseLoc));
-		log.info(log_prepend + "MODEL:" + model);
 		return "redirect:showConfirmation";
 	}
 
@@ -265,7 +281,7 @@ public class ProfessorController {
 
 		log.debug(log_prepend + "bindingResult: " + bindingResult);
 
-		testCasevalidator.validate(question, bindingResult);
+		testCaseValidator.validate(question, bindingResult);
 		if (bindingResult.hasErrors()) {
 
 			redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.question",
@@ -278,5 +294,13 @@ public class ProfessorController {
 		log.debug(log_prepend + "Redirecting to /showConfirmProcessing");
 		return "redirect:showConfirmProcessing";
 
+	}
+
+	@GetMapping("/logout")
+	public String logout(Map<String, Object> model) {
+		model.put("homework", new Homework());
+		model.put("question", new Question());
+		model.put("currentQuestion", 0);
+		return "TEMP";
 	}
 }

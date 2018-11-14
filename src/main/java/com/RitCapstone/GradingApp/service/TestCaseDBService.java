@@ -24,7 +24,18 @@ public class TestCaseDBService {
 
 	}
 
-	public boolean saveTestCases(String homework, String question, String testCaseNumber, File testcaseInput,
+	public boolean deleteTestCases(String homework, String question) {
+
+		try {
+			return testCasesDAO.deleteTestCases(homework, question);
+		} catch (Exception e) {
+			log.error(log_prepend + " Exception occurred in deleteTestCases:" + e.getMessage());
+			return false;
+		}
+
+	}
+
+	public boolean saveTestCase(String homework, String question, String testCaseNumber, File testcaseInput,
 			File testcaseOutput) {
 
 		log.debug(String.format("%s Save TestCase: Homework (%s), question (%s), testCaseNumber (%s)", log_prepend,

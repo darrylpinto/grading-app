@@ -45,7 +45,7 @@
 		<c:when test="${currentQuestion == homework.numberOfQuestions + 1}">
 
 			<br>
-			<form:form method="post" action="logout">
+			<form:form method="get" action="logout">
 				<input type="submit" value="Logout" />
 			</form:form>
 		</c:when>

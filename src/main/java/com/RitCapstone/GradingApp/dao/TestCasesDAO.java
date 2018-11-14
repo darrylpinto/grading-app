@@ -12,4 +12,6 @@ public interface TestCasesDAO {
 	
 	public boolean testCaseExists(String homework, String question, String testCaseNumber);
 
+	public boolean deleteTestCases(String homework, String question);
+
 }
