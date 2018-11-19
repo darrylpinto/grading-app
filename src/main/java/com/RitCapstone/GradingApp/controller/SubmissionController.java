@@ -1,14 +1,14 @@
 package com.RitCapstone.GradingApp.controller;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Valid;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -26,10 +26,12 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.RitCapstone.GradingApp.Homework;
+import com.RitCapstone.GradingApp.HomeworkOptions;
 import com.RitCapstone.GradingApp.Submission;
 import com.RitCapstone.GradingApp.service.FileService;
+import com.RitCapstone.GradingApp.service.HomeworkOptionsService;
 import com.RitCapstone.GradingApp.service.OnlineCompileAPIService;
+import com.RitCapstone.GradingApp.service.QuestionMetadataService;
 import com.RitCapstone.GradingApp.service.SubmissionDBService;
 import com.RitCapstone.GradingApp.service.TestCaseDBService;
 import com.RitCapstone.GradingApp.validator.SubmissionValidator;
@@ -39,7 +41,8 @@ import com.RitCapstone.GradingApp.validator.SubmissionValidator;
 @SessionAttributes("submission")
 public class SubmissionController {
 
-	Submission submission;
+	private static final String PASS = "Passed";
+	private static final String FAIL = "Failed";
 
 	@Autowired
 	SubmissionValidator submissionValidator;
@@ -55,6 +58,12 @@ public class SubmissionController {
 
 	@Autowired
 	OnlineCompileAPIService compileAPIService;
+
+	@Autowired
+	HomeworkOptionsService homeworkOptionsService;
+
+	@Autowired
+	QuestionMetadataService questionMetadataService;
 
 	private static Logger log = Logger.getLogger(SubmissionController.class);
 
@@ -90,7 +99,11 @@ public class SubmissionController {
 		}
 
 		if (!model.containsAttribute("hw")) {
-			model.addAttribute("hw", new Homework());
+
+			HomeworkOptions hwOptions = new HomeworkOptions();
+			hwOptions.setHomeworkOptions(homeworkOptionsService.getHomeworkOptions());
+			model.addAttribute("hw", hwOptions);
+
 			log.debug(log_prepend + "adding hw to model");
 		}
 
@@ -141,11 +154,18 @@ public class SubmissionController {
 	public String showRemainingForm(@SessionAttribute("submission") Submission submission, Model model) {
 
 		String log_prepend = "[GET /showForm2]";
-		if (!model.containsAttribute("hw")) {
-			model.addAttribute("hw", new Homework());
-			log.debug(log_prepend + "adding hw to model");
-		}
-		log.debug(log_prepend + "Session:" + submission);
+
+		HomeworkOptions hwOptions = new HomeworkOptions();
+		hwOptions.setHomeworkOptions(homeworkOptionsService.getHomeworkOptions());
+		hwOptions.setQuestionOptions(homeworkOptionsService.getQuestionNameOptions(submission.getHomework()));
+		model.addAttribute("hw", hwOptions);
+
+		Map<?, ?> map = homeworkOptionsService.getFileRestrictionInfo();
+
+		model.addAttribute("langaugeOptions", map.get("langaugeOptions"));
+		model.addAttribute("writeupExtension", map.get("writeupExtension"));
+		model.addAttribute("codeExtension", map.get("codeExtension"));
+
 		log.debug(log_prepend + "Model:" + model);
 		String jspToDisplay = "student-submission-remaining";
 		log.debug(log_prepend + "Displaying " + jspToDisplay);
@@ -186,6 +206,10 @@ public class SubmissionController {
 	@GetMapping("/pleaseWait")
 	public String displayWait() {
 		// This is display the loader
+
+		// while displaying the loader if user forcefully stops the processing via
+		// browser,
+		// the loader continue to display
 		return "please-wait";
 	}
 
@@ -202,32 +226,34 @@ public class SubmissionController {
 		String log_prepend = "[GET /showConfirmation]";
 		String homework = submission.getHomework();
 		String username = submission.getUsername();
-		String question = submission.getQuestion();
+		String problemName = submission.getProblemName();
 		String language = submission.getLanguage();
 
+		String questionNumber = questionMetadataService.getQuestionNumber(homework, problemName);
+
 		// save the files uploaded my student to local machine
-		String zipPath = fileService.saveStudentSubmission(homework, username, question, submission.getCodeFiles(),
-				submission.getWriteupFiles());
+		String zipPath = fileService.saveStudentSubmission(homework, username, questionNumber,
+				submission.getCodeFiles(), submission.getWriteupFiles());
 
 		// save the information of homework, question, username, and submission location
 		// to mongoDB
-		boolean savedSubmission = submissionDBService.saveSubmission(homework, username, question, zipPath,
-				question + ".zip");
+		boolean savedSubmission = submissionDBService.saveSubmission(homework, username, questionNumber, zipPath,
+				questionNumber + ".zip");
 		if (!savedSubmission) {
 			log.error(String.format("%s Submission not saved:Homework (%s), username (%s), question (%s)", log_prepend,
-					homework, username, question));
+					homework, username, questionNumber));
 		}
 
 		// Unzip the test case files to local
-		String unzipTestCaseLoc = zipPath + "testCases" + question;
-		boolean testcaseToLocal = testCaseDBService.getTestCases(homework, question, unzipTestCaseLoc);
+		String unzipTestCaseLoc = zipPath + "testCases" + questionNumber;
+		boolean testcaseToLocal = testCaseDBService.getTestCases(homework, questionNumber, unzipTestCaseLoc);
 		if (!testcaseToLocal) {
 			log.error(String.format("%s Test case not found :Homework (%s), question (%s)", log_prepend, homework,
 					username));
 		}
 
-		String zipFile = zipPath + question + ".zip";
-		String unzipDest = zipPath + question;
+		String zipFile = zipPath + questionNumber + ".zip";
+		String unzipDest = zipPath + questionNumber;
 
 		boolean unzipped = fileService.unzip(zipFile, unzipDest);
 		// It will unzip to directory question directory
@@ -237,7 +263,7 @@ public class SubmissionController {
 					homework, username));
 		}
 
-		// delete non code-file from unzip dir
+		// delete non code-file [writeup] from unzip dir
 		boolean deleteNonCodeFiles = fileService.deleteNonCodeFiles(unzipDest);
 
 		if (!deleteNonCodeFiles) {
@@ -245,11 +271,9 @@ public class SubmissionController {
 					zipFile, homework, username));
 		}
 
-		// TODO main_file_name needs to be resolved here
-		String mainFileName = "MaxRectanglePerimeter";
 		String jsonValidString = null;
 		try {
-			jsonValidString = compileAPIService.getJSONValidStringCode(unzipDest, mainFileName, language);
+			jsonValidString = compileAPIService.getJSONValidStringCode(unzipDest, problemName, language);
 		} catch (Exception e) {
 			log.error(log_prepend + " Error in getting json valid string: " + e.getMessage());
 		}
@@ -260,8 +284,7 @@ public class SubmissionController {
 		// Segregate input and output files
 		ArrayList<File> inputTestCaseFiles = new ArrayList<>();
 		ArrayList<File> outputTestCaseFiles = new ArrayList<>();
-		ArrayList<String> outputList = new ArrayList<>();
-		
+
 		for (File testCaseFile : testCaseFiles) {
 
 			if (testCaseFile.getName().contains("input"))
@@ -269,34 +292,74 @@ public class SubmissionController {
 			else if (testCaseFile.getName().contains("output"))
 				outputTestCaseFiles.add(testCaseFile);
 			else
-				System.out.println("******* SHOULD NOT ENTER HERE *****");
+				System.out.println("******* SHOULD NOT ENTER HERE *****, File:" + testCaseFile);
 		}
 
 		Collections.sort(inputTestCaseFiles);
 		Collections.sort(outputTestCaseFiles);
-		
+
+		ArrayList<String> outputList = new ArrayList<>();
+
 		// All the files in test cases need to be run in API
 		for (File testCaseFile : inputTestCaseFiles) {
 			String testCaseString = compileAPIService.getJSONValidTestCase(testCaseFile);
 			outputList.add(compileAPIService.useJudge0API(jsonValidString, language, testCaseString));
-			// TODO Test case passed or not, evaluate the output with testcases
+
+		}
+
+		// codeStatus: keeps track of code passed or failed the test case
+		ArrayList<String> codeStatus = new ArrayList<>();
+		ArrayList<String> expectedOutputList = new ArrayList<>();
+		
+
+		// Test case passed or not, evaluate the output with testcases
+		for (int i = 0; i < outputTestCaseFiles.size(); i++) {
+
+			boolean fileUploadedError = false;
+			String expectedOutput = "";
+			try {
+				expectedOutput = fileService.getFileContent(outputTestCaseFiles.get(i)).trim();
+			} catch (FileNotFoundException e) {
+				log.error("Output File not found!");
+				fileUploadedError = true;
+			}
 			
+			String codeOutput = "";
+			
+			try {
+				codeOutput = outputList.get(i).trim();
+			} catch (NullPointerException e) {
+				codeOutput = "-";
+			}
+
+			if (fileUploadedError) {
+				codeStatus.add("Output file not uploaded; Contact Professor!");
+				expectedOutputList.add("error");
+		
+			} else if (expectedOutput.equals(codeOutput)) {
+				codeStatus.add(PASS);
+				expectedOutputList.add(expectedOutput);
+			
+			} else {
+				codeStatus.add(FAIL);
+				expectedOutputList.add(expectedOutput);
+			}
 		}
 
 		// delete unzip folder, testcases and code
-		try {
-			FileUtils.deleteDirectory(new File(unzipDest));
-			log.debug(log_prepend + " deleted: " + unzipDest);
-		} catch (IOException e) {
-			log.error(log_prepend + " Unable to delete: " + unzipDest);
-		}
-
-		try {
-			FileUtils.deleteDirectory(new File(unzipTestCaseLoc));
-			log.debug(log_prepend + " deleted: " + unzipTestCaseLoc);
-		} catch (IOException e) {
-			log.error(log_prepend + " Unable to delete: " + unzipTestCaseLoc);
-		}
+//		try {
+//			FileUtils.deleteDirectory(new File(unzipDest));
+//			log.debug(log_prepend + " deleted: " + unzipDest);
+//		} catch (IOException e) {
+//			log.error(log_prepend + " Unable to delete: " + unzipDest);
+//		}
+//
+//		try {
+//			FileUtils.deleteDirectory(new File(unzipTestCaseLoc));
+//			log.debug(log_prepend + " deleted: " + unzipTestCaseLoc);
+//		} catch (IOException e) {
+//			log.error(log_prepend + " Unable to delete: " + unzipTestCaseLoc);
+//		}
 
 		// Show confirmation to students of submitted file
 		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);
@@ -305,7 +368,9 @@ public class SubmissionController {
 		model.addAttribute("codeFileNames", codeFileNames);
 		model.addAttribute("writeupFileNames", writeupFileNames);
 		model.addAttribute("outputList", outputList);
-
+		model.addAttribute("codeStatus", codeStatus);
+		model.addAttribute("expectedOutput", expectedOutputList);
+		
 		log.debug(log_prepend + "Displaying: student-confirmation");
 
 		return "student-confirmation";
@@ -321,7 +386,7 @@ public class SubmissionController {
 	@PostMapping("/showConfirmation")
 	public String showFormAgain(@SessionAttribute("submission") Submission submission) {
 		String log_prepend = "[POST /showConfirmation]";
-		submission.setQuestion(null);
+		submission.setProblemName(null);
 		submission.setCodeFiles(null);
 		submission.setWriteupFiles(null);
 		log.debug(log_prepend + "Submission:" + submission);
@@ -339,7 +404,7 @@ public class SubmissionController {
 	@PostMapping("/redirectHome")
 	public String redirectHome(@SessionAttribute("submission") Submission submission) {
 		String log_prepend = "[POST /redirectHome]";
-		submission.setQuestion(null);
+		submission.setProblemName(null);
 		submission.setCodeFiles(null);
 		submission.setWriteupFiles(null);
 		submission.setUsername(null);

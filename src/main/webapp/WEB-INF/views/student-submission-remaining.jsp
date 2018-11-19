@@ -2,7 +2,7 @@
 	pageEncoding="UTF-8"%>
 
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
-
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -27,28 +27,33 @@
  	 Homework: ${submission.homework}
 		<br>
 		<br>
-	
- 	  Question: <form:radiobuttons path="question"
-			items="${hw.questionOptions}" />
-		<form:errors path="question" cssClass="error" />
+
+		Question Name:
+		<form:select path="problemName">
+			<form:options items="${hw.questionOptions}" />
+		</form:select>
+		<form:errors path="problemName" cssClass="error" />
 		<br>
 		<br>
-	Code for the Question: <small>(*Max 2 MB combined)</small>
-		<br>
-		<!-- TODO READ FROM FILE AND ADD ALLOWED TYPES -->
+		
+	Code for the Question: 
+		<small>(*Max 1.5 MB combined) <br> Allowed extensions: <c:forEach
+				items="${codeExtension}" var="ext"> ${ext} </c:forEach>
+		</small>
 		<br>
 		<form:input path="codeFiles" type="file" multiple="multiple" />
 		<form:errors path="codeFiles" cssClass="error" />
 		<br>
 		<br>
-	Language:<form:radiobuttons path="language"
-			items="${hw.languageOptions}" />
+ 	Language:<form:radiobuttons path="language" items="${langaugeOptions}" />
 		<form:errors path="language" cssClass="error" />
 		<br>
 		<br>
 
-	Write-Up for the Question: 	<br>
-		<!-- TODO READ FROM FILE AND ADD ALLOWED TYPES -->
+	Write-Up for the Question:
+		<small> Allowed extensions: <c:forEach
+				items="${writeupExtension}" var="ext"> ${ext} </c:forEach>
+		</small>
 		<br>
 		<form:input path="writeupFiles" type="file" />
 		<form:errors path="writeupFiles" cssClass="error" />
@@ -59,7 +64,7 @@
 	</form:form>
 	<br>
 	<br>
-	<small>** IF VALIDATION ERROR OCCURS CODE AND WRITE-UP FIELDS
+	<small>** IF VALIDATION ERROR OCCURS CODE AND WRITE-UP FILES
 		NEED TO BE UPLOADED AGAIN</small>
 	<br>
 	<br>

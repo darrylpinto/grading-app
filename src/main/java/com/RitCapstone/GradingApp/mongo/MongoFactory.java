@@ -15,14 +15,10 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.gridfs.GridFS;
-import com.mongodb.gridfs.GridFSDBFile;
-import com.mongodb.gridfs.GridFSInputFile;
 
 public class MongoFactory {
 
 	private static Logger log = Logger.getLogger(MongoFactory.class);
-	private static String log_prepend = "[MongoFactory]";
 
 	public final static String mongoClientJSON = "mongoClient.json";
 
@@ -54,7 +50,7 @@ public class MongoFactory {
 
 			} catch (IOException | ParseException e) {
 
-				log.error(log_prepend + " Error in MongoFactory.getDatabaseName(): " + e.getMessage());
+				log.error("Error in MongoFactory.getDatabaseName(): " + e.getMessage());
 				return null;
 			}
 
@@ -82,14 +78,12 @@ public class MongoFactory {
 				JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(file));
 				String hostname = (String) jsonObject.get("hostname");
 				long port = (Long) jsonObject.get("port");
-
-				log.info(String.format("%s MongoClient: Hostname: %s \t Port:%d", log_prepend, hostname, port));
-
+				
 				mongo = new MongoClient(hostname, (int) port);
-				log.debug(log_prepend + " New Mongo Client created");
+				log.debug(String.format("MongoClient: Hostname: %s \t Port:%d", hostname, port));
 
 			} catch (IOException | ParseException | MongoException e) {
-				log.error(log_prepend + " Error in MongoFactory.getMongoClient(): " + e.getMessage());
+				log.error("Error in MongoFactory.getMongoClient(): " + e.getMessage());
 			}
 		}
 		return mongo;
@@ -104,7 +98,6 @@ public class MongoFactory {
 	 * @return MongoDatabase to be returned
 	 */
 	public static MongoDatabase getDatabase(String databaseName) {
-		log.debug(log_prepend + " getDatabase: " + databaseName);
 		return getMongoClient().getDatabase(databaseName);
 	}
 
@@ -112,7 +105,6 @@ public class MongoFactory {
 	// GridFS
 	@SuppressWarnings("deprecation")
 	public static DB getDB(String databaseName) {
-		log.debug(log_prepend + "getDB: " + databaseName);
 		return getMongoClient().getDB(databaseName);
 	}
 
@@ -125,7 +117,6 @@ public class MongoFactory {
 	 * @return MongoDatabase to be returned
 	 */
 	public static MongoCollection<Document> getCollection(String databaseName, String collectionName) {
-		log.debug(log_prepend + String.format("getCollection: %s from DB %s", collectionName, databaseName));
 		return getDatabase(databaseName).getCollection(collectionName);
 	}
 

@@ -2,12 +2,14 @@ package com.RitCapstone.GradingApp.service;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -24,13 +26,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
-import com.RitCapstone.GradingApp.mongo.MongoFactory;
-
 @Service
 public class FileService {
 
 	private static Logger log = Logger.getLogger(FileService.class);
-	private static String log_prepend = "[FileService]";
 
 	private static final String fileRestrictionJSON = "fileRestrictions.json";
 
@@ -60,7 +59,7 @@ public class FileService {
 		// saving all files to zip
 		for (File file : listOfFiles) {
 			if (file.isFile()) {
-				log.debug(String.format("%s Zipping into %s: %s", log_prepend, zipName, file.getName()));
+				log.debug(String.format("Zipping into %s: %s", zipName, file.getName()));
 
 				ZipEntry zipEntry = new ZipEntry(file.getName());
 				out.putNextEntry(zipEntry);
@@ -73,7 +72,7 @@ public class FileService {
 		}
 		out.close();
 
-		log.info(String.format("%s Moving %s to %s", log_prepend, zipFile.getAbsolutePath(), zipFileDest));
+		log.info(String.format("Moving %s to %s", zipFile.getAbsolutePath(), zipFileDest));
 
 		// Move the zip folder out of current folder to zipFileDest
 		try {
@@ -83,9 +82,9 @@ public class FileService {
 			// submission]
 
 		} catch (FileExistsException e) {
-			log.info(log_prepend + " " + e.getMessage());
+			log.debug(e.getMessage());
 			FileUtils.deleteQuietly(new File(zipFileDest + zipName));
-			log.info(log_prepend + " " + "Deleted stale zip file");
+			log.debug("Deleted stale zip file");
 			FileUtils.moveFileToDirectory(zipFile, new File(zipFileDest), false);
 			// false will avoid creating a dir if dir does not exist
 
@@ -93,7 +92,7 @@ public class FileService {
 
 		// Delete the question folder as it has been zipped
 		FileUtils.deleteDirectory(new File(filesToZipPath));
-		log.info(log_prepend + " Deleted " + filesToZipPath);
+		log.info("Deleted " + filesToZipPath);
 
 	}
 
@@ -125,18 +124,17 @@ public class FileService {
 			try {
 
 				// Should not have entered here as we delete the folder after zipping
-				log.warn(log_prepend + " " + destinationDir.getAbsolutePath()
-						+ " exists!! Deleting it [Should not have entered here]");
+				log.warn(destinationDir.getAbsolutePath() + " exists!! Deleting it [Should not have entered here]");
 				FileUtils.deleteDirectory(destinationDir);
 
 			} catch (IOException e) {
-				log.error(log_prepend + " Error deleting " + destinationDir.getName() + " : " + e.getMessage());
+				log.error("Error deleting " + destinationDir.getName() + " : " + e.getMessage());
 			}
 
 		}
 
 		// To create the directory if it is not there
-		log.debug(log_prepend + " Creating " + destinationDir.getAbsolutePath());
+		log.debug("Creating " + destinationDir.getAbsolutePath());
 		new File(currentPath + ".tmp").mkdirs();
 
 		CommonsMultipartFile[] files = (CommonsMultipartFile[]) ArrayUtils.addAll(codeFiles, writeupFiles);
@@ -147,9 +145,9 @@ public class FileService {
 				FileCopyUtils.copy(file.getBytes(), new File(currentPath + file.getOriginalFilename()));
 
 			} catch (IOException e) {
-				log.error(log_prepend + " Error copying uploaded files to local: " + e.getMessage());
+				log.error("Error copying uploaded files to local: " + e.getMessage());
 			} catch (IllegalStateException e) {
-				log.error(log_prepend + " Error copying uploaded files to local: " + e.getMessage());
+				log.error("Error copying uploaded files to local: " + e.getMessage());
 				e.printStackTrace();
 			}
 		}
@@ -158,7 +156,7 @@ public class FileService {
 		try {
 			zip(currentPath, question + ".zip", zipFileDest);
 		} catch (IOException e) {
-			log.error(log_prepend + " Error zipping the student submission: " + e.getMessage());
+			log.error("Error zipping the student submission: " + e.getMessage());
 		}
 		return zipFileDest;
 
@@ -166,6 +164,7 @@ public class FileService {
 
 	public String saveTestCasesToLocal(CommonsMultipartFile[] testCases, CommonsMultipartFile[] outputTestCases) {
 		int count;
+
 		String testCasePath = chosenDir + ".testCases" + File.separator;
 		new File(testCasePath).mkdirs();
 
@@ -176,7 +175,7 @@ public class FileService {
 				FileCopyUtils.copy(file.getBytes(), new File(testCasePath + "input_" + count++));
 
 			} catch (IOException e) {
-				log.error(log_prepend + " Error saving INPUT test cases to local: " + e.getMessage());
+				log.error("Error saving INPUT test cases to local: " + e.getMessage());
 			}
 		}
 		count = 1;
@@ -186,7 +185,7 @@ public class FileService {
 				FileCopyUtils.copy(file.getBytes(), new File(testCasePath + "output_" + count++));
 
 			} catch (IOException e) {
-				log.error(log_prepend + " Error saving OUTPUT test cases to local: " + e.getMessage());
+				log.error("Error saving OUTPUT test cases to local: " + e.getMessage());
 			}
 		}
 		return testCasePath;
@@ -216,7 +215,7 @@ public class FileService {
 				String fileName = zipEntry.getName();
 				File newFile = new File(destDir + File.separator + fileName);
 
-				log.debug(log_prepend + " Unzipping to " + newFile.getAbsolutePath());
+				log.debug("Unzipping to " + newFile.getAbsolutePath());
 				FileOutputStream fileOutputStream = new FileOutputStream(newFile);
 
 				int len;
@@ -237,7 +236,7 @@ public class FileService {
 			return true;
 
 		} catch (IOException e) {
-			log.error(log_prepend + "" + e.getMessage());
+			log.error(e.getMessage());
 			return false;
 		}
 
@@ -256,7 +255,7 @@ public class FileService {
 			return false; // as listOfFiles is not a directory
 		}
 		// get the code extensions from fileRestrictions.json
-		ClassLoader classLoader = MongoFactory.class.getClassLoader();
+		ClassLoader classLoader = FileService.class.getClassLoader();
 		File jsonFile = new File(classLoader.getResource(fileRestrictionJSON).getFile());
 
 		JSONParser parser = new JSONParser();
@@ -271,7 +270,7 @@ public class FileService {
 				codeExtensionSet.add(it.next().toString());
 
 		} catch (Exception e) {
-			log.error(log_prepend + " Error while reading jsonFile in deleteFile: " + e.getMessage());
+			log.error("Error while reading jsonFile in deleteFile: " + e.getMessage());
 			return false;
 		}
 
@@ -284,13 +283,13 @@ public class FileService {
 
 				if (!codeExtensionSet.contains(extension)) {
 					file.delete();
-					log.info(log_prepend + " File deleted: " + filename);
+					log.info("File deleted: " + filename);
 				}
 			}
 			return true;
 
 		} catch (Exception e) {
-			log.error(log_prepend + " Error in deleteFile: " + e.getMessage());
+			log.error("Error in deleteFile: " + e.getMessage());
 			return false;
 		}
 
@@ -299,7 +298,7 @@ public class FileService {
 	public File[] getFiles(String dirName) {
 		File dir = new File(dirName);
 		if (!dir.isDirectory()) {
-			log.error(log_prepend + " " + dir.getName() + " is not a directory");
+			log.error(dir.getName() + " is not a directory");
 			return null;
 		}
 
@@ -324,6 +323,14 @@ public class FileService {
 		String extension = "." + _parts[_parts.length - 1];
 		return extension;
 
+	}
+
+	public String getFileContent(File file) throws FileNotFoundException {
+	    Scanner sc = new Scanner(file); 
+	    sc.useDelimiter("\\Z"); 
+	    String contents = sc.next();
+	    sc.close();
+		return contents;
 	}
 
 }

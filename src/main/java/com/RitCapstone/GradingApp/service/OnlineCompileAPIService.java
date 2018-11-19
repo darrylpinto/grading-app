@@ -22,7 +22,6 @@ import com.mashape.unirest.http.Unirest;
 public class OnlineCompileAPIService {
 
 	private static Logger log = Logger.getLogger(OnlineCompileAPIService.class);
-	private static String log_prepend = "[OnlineCompileAPIService]";
 
 	@Autowired
 	FileService fileService;
@@ -36,12 +35,12 @@ public class OnlineCompileAPIService {
 		String jsonValidCodeString = "";
 		if (extension.equals("")) {
 			throw new Exception("unsupported format received: Allowed formats are '.java' and '.cpp'");
-		} else if (extension.equals(".java")) {
+		} else if (extension.equals("Java")) {
 			jsonValidCodeString = combineJava(listOfFiles, mainFileName);
-		} else if (extension.equals(".cpp")) {
+		} else if (extension.equals("C++")) {
 			jsonValidCodeString = combineCPP(listOfFiles);
 		} else {
-			throw new Exception("should not come here");
+			throw new Exception("unsupported format received: "+ extension);
 		}
 
 		return jsonValidCodeString;
@@ -61,7 +60,7 @@ public class OnlineCompileAPIService {
 			} else if (extension.equals(".cpp")) {
 				cppFiles.add(file);
 			} else {
-				log.error(log_prepend + " the file supplied is neither .cpp nor .h: " + file.getName());
+				log.error("The file supplied is neither .cpp nor .h: " + file.getName());
 			}
 		}
 
@@ -131,7 +130,7 @@ public class OnlineCompileAPIService {
 
 		String output = importLines + codeLines;
 		output = output.replace("\\", "\\\\").replace("\"", "\\\"").replace("public class", "class")
-				.replace("class " + mainFileName, "public class Main").replace("\t", "\\t").replace("\n", "\\n");
+				.replace(mainFileName, "Main").replace("\t", "\\t").replace("\n", "\\n");
 
 		return output;
 	}
@@ -152,11 +151,11 @@ public class OnlineCompileAPIService {
 			String fileOutput = sc.next();
 			fileOutput = fileOutput.replace("\t", "\\t").replace("\n", "\\n");
 			sc.close();
-			log.debug(log_prepend + " Test case file converted to JSON Valid String");
+			log.debug("Test case file converted to JSON Valid String");
 			return fileOutput;
 
 		} catch (IOException e) {
-			log.error(log_prepend + " Error in getJSONValidTestCase(): " + e.getMessage());
+			log.error("Error in getJSONValidTestCase(): " + e.getMessage());
 			return null;
 
 		}
@@ -170,9 +169,9 @@ public class OnlineCompileAPIService {
 		// The language code used for Judge0 online compiler
 		// For complete list of languages, using a REST client (For example: Postman)
 		// GET https://api.judge0.com/languages
-		languageCode.put(".cpp", 10);
-		languageCode.put(".java", 27);
-		languageCode.put(".py", 34);
+		languageCode.put("C++", 10);
+		languageCode.put("Java", 27);
+		languageCode.put("Python3", 34);
 
 		try {
 
@@ -185,13 +184,13 @@ public class OnlineCompileAPIService {
 					.header("Content-Type", "application/json").header("cache-control", "no-cache").body(body)
 					.asString();
 
-			log.info(log_prepend + "Status of Unirest POST operation: " + postResponse.getStatus());
+			log.info("Status of Unirest POST operation: " + postResponse.getStatus());
 
 			// convert string to JSON
 			JSONParser parser = new JSONParser();
 			JSONObject postResponseJson = (JSONObject) parser.parse(postResponse.getBody());
 			String token = (String) postResponseJson.get("token");
-			log.debug(log_prepend + " Token: " + token);
+			log.debug("Token: " + token);
 			JSONObject getResponseJson = null;
 
 			while (true) {
@@ -200,7 +199,7 @@ public class OnlineCompileAPIService {
 				HttpResponse<String> getResponse = Unirest.get(getURL).header("Content-Type", "application/json")
 						.header("cache-control", "no-cache").asString();
 
-				log.info(log_prepend + "Status of Unirest GET operation: " + getResponse.getStatus());
+				log.info("Status of Unirest GET operation: " + getResponse.getStatus());
 
 				String GETResponseBody = getResponse.getBody();
 
@@ -231,7 +230,7 @@ public class OnlineCompileAPIService {
 			return output.trim();
 
 		} catch (Exception e) {
-			log.error(log_prepend + " Error in useJudge0API(): " + e.getMessage());
+			log.error("Error in useJudge0API(): " + e.getMessage());
 			return null;
 		}
 	}
@@ -239,15 +238,16 @@ public class OnlineCompileAPIService {
 	public static void main(String args[]) throws Exception {
 
 		System.out.println("hi");
-//		OnlineCompileAPIService api = new OnlineCompileAPIService();
-//		String code = api.getJSONValidStringCode(
-//				"/home/darryl/eclipse-workspace/grading-app/src/main/java/com/RitCapstone/GradingApp/service/temp",
-//				"MaxRectanglePerimeter",".cpp");
-//		
-//		System.out.println("@@@"+code+"@@@");
+		OnlineCompileAPIService api = new OnlineCompileAPIService();
+		String code = api.getJSONValidStringCode(
+				"/home/darryl/eclipse-workspace/grading-app/src/main/java/com/RitCapstone/GradingApp/service/temp",
+				"IntervalsBreaks","Java");
+		
+		System.out.println("@@@"+code+"@@@");
 //		String _input = api.getJSONValidTestCase(new File("/home/darryl/cTestCases/input-2.6"));
-//		String output = api.useJudge0API(code, ".cpp", _input);
+//		String output = api.useJudge0API(code, "Java", _input);
 //		System.out.println(output);
+		
 		System.out.println("bye");
 	}
 

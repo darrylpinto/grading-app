@@ -20,24 +20,41 @@ body {
 </style>
 </head>
 <body>
+
 	<h3>ALGORITHMS-GRADING</h3>
-	Code For Question ${submission.question}:
+	Code For ${submission.problemName}:
 	<br>
+
 	<c:forEach items="${codeFileNames}" var="fileName">
-  File <b>${fileName}</b> uploaded successfully<br />
+		File <b>${fileName}</b> uploaded successfully<br />
 	</c:forEach>
+
 	<br>
-	<br> Write-up For Question ${submission.question}:
+
+	<br> Write-up For ${submission.problemName}:
+
 	<br>
+
 	<c:forEach items="${writeupFileNames}" var="fileName">
-  File <b>${fileName}</b> uploaded successfully<br />
+		File <b>${fileName}</b> uploaded successfully<br />
 	</c:forEach>
+
 	<br>
 
 	<c:forEach items="${outputList}" var="output" varStatus="loop">
-  Output ${loop.index}: <b>${output}</b>
-		<br />
+		${loop.index + 1}.
+		
+		&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;
+  		Your Output : <b>${output}</b>
+		
+		&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;
+		Expected Output:  ${expectedOutput[loop.index]}
+		
+		&nbsp;&nbsp;&nbsp;&nbsp;	&nbsp;&nbsp;&nbsp;&nbsp;	
+		Test Case <b>${codeStatus[loop.index]}</b>
+		<br>
 	</c:forEach>
+
 	<br>
 
 	<form method="post">

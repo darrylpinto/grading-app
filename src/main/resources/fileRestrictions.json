@@ -12,5 +12,10 @@
 		".cpp",
 		".java",
 		".py"
+	],
+	"langaugeOptions": [
+		"C++",
+		"Java",
+		"Python3"
 	]
 }

@@ -15,12 +15,11 @@ public class SubmissionDBService {
 	SubmissionDAO submissionDAO;
 
 	private static Logger log = Logger.getLogger(SubmissionDBService.class);
-	private static String log_prepend = "[SubmissionDBService]";
 
 	public String getSubmission(String homework, String username, String question) {
 
-		log.debug(String.format("%s Get submission: Homework (%s), username (%s), question (%s)", log_prepend, homework,
-				username, question));
+		log.debug(String.format("Get submission: Homework (%s), username (%s), question (%s)", homework, username,
+				question));
 
 		return submissionDAO.getSubmissionLocation(homework, username, question);
 	}
@@ -42,14 +41,15 @@ public class SubmissionDBService {
 		// If homework not there then createSubmission
 		if (getSubmission(homework, username, question) == null) {
 
-			log.debug(String.format("%s Creating new submission: Homework (%s), username (%s), question (%s)",
-					log_prepend, homework, username, question));
+			log.debug(String.format("Creating new submission: Homework (%s), username (%s), question (%s)", homework,
+					username, question));
 			return submissionDAO.createSubmission(homework, username, question, zipPath, zipFileName);
 		}
+
 		// If homework already there then updateSubmission
 		else {
-			log.debug(String.format("%s Updatinng submission: Homework (%s), username (%s), question (%s)", log_prepend,
-					homework, username, question));
+			log.debug(String.format("%s Updatinng submission: Homework (%s), username (%s), question (%s)", homework,
+					username, question));
 			return submissionDAO.updateSubmission(homework, username, question, zipPath, zipFileName);
 		}
 

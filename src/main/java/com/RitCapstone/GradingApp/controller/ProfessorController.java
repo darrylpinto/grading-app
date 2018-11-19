@@ -2,6 +2,8 @@ package com.RitCapstone.GradingApp.controller;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
 
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.RitCapstone.GradingApp.Homework;
@@ -31,6 +34,7 @@ import com.RitCapstone.GradingApp.ProfessorAndGrader;
 import com.RitCapstone.GradingApp.Question;
 import com.RitCapstone.GradingApp.service.FileService;
 import com.RitCapstone.GradingApp.service.QuestionMetadataService;
+
 import com.RitCapstone.GradingApp.service.TestCaseDBService;
 import com.RitCapstone.GradingApp.validator.AuthenticationValidator;
 import com.RitCapstone.GradingApp.validator.TestCaseValidator;
@@ -206,6 +210,10 @@ public class ProfessorController {
 
 		question.setQuestionNumber(currentQuestion);
 
+
+		Arrays.sort(question.getTestCases(), new SortByName());
+		Arrays.sort( question.getOutputTestCases(), new SortByName());
+		
 		// add question names
 		question.setTestCaseNames(fileService.getMultipartFileNames(question.getTestCases()));
 		question.setOutputTestCaseNames(fileService.getMultipartFileNames(question.getOutputTestCases()));
@@ -216,9 +224,9 @@ public class ProfessorController {
 		currentQuestion++;
 		model.put("currentQuestion", currentQuestion);
 		model.put("question", question);
-
-		log.info(log_prepend + " testCaseInput:" + model.get("testCaseInput"));
-		log.info(log_prepend + " testCaseOutput:" + model.get("testCaseOutput"));
+		
+		log.debug(log_prepend + " testCaseInput:" + model.get("testCaseInput"));
+		log.debug(log_prepend + " testCaseOutput:" + model.get("testCaseOutput"));
 
 		// Save uploaded test cases to local
 		String testCaseLoc = fileService.saveTestCasesToLocal(question.getTestCases(), question.getOutputTestCases());
@@ -230,8 +238,6 @@ public class ProfessorController {
 		// Save questionMetaData in MongoDB
 		questionService.saveMetadata(hwId, questionNumber, question.getProblemName(), question.getQuestionDescription(),
 				homework.getDueDate());
-		
-		System.out.println("SAVED METADATA");
 
 		// Delete previous test case files from MongoDB
 		testCaseDBService.deleteTestCases(hwId, questionNumber);
@@ -303,4 +309,15 @@ public class ProfessorController {
 		model.put("currentQuestion", 0);
 		return "TEMP";
 	}
+}
+
+class SortByName implements Comparator<CommonsMultipartFile> {
+
+	@Override
+	public int compare(CommonsMultipartFile f1, CommonsMultipartFile f2) {
+		String name1 = f1.getOriginalFilename();
+		String name2 = f2.getOriginalFilename();
+		return name1.compareTo(name2);
+	}
+
 }

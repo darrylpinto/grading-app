@@ -16,12 +16,11 @@ public class QuestionMetadataService {
 	QuestionDAO questionDAO;
 
 	private static Logger log = Logger.getLogger(QuestionMetadataService.class);
-	private static String log_prepend = "[QuestionMetadataService]";
 
 	public Map<?, ?> getMetadata(String homework, String questionNumber) {
 
 		log.debug(
-				String.format("%s Get submission: Homework (%s),question (%s)", log_prepend, homework, questionNumber));
+				String.format("Get submission: Homework (%s),question (%s)", homework, questionNumber));
 
 		return questionDAO.getQuestionMetaData(homework, questionNumber);
 	}
@@ -38,6 +37,10 @@ public class QuestionMetadataService {
 		else
 			return questionDAO.updateQuestionMetaData(homework, questionNumber, problemName, description, dueDate);
 
+	}
+
+	public String getQuestionNumber(String homeworkNumber, String problemName) {
+		return questionDAO.getQuestionNumber(homeworkNumber, problemName);
 	}
 
 }

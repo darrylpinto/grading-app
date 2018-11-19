@@ -48,8 +48,6 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 						log_prepend, homework, question, testCaseNumber));
 				return false;
 			} else {
-				log.info(String.format("%s TestCases Found: : Homework (%s), question (%s) testCaseNumber (%s)",
-						log_prepend, homework, question, testCaseNumber));
 				return true;
 			}
 		} catch (Exception e) {
@@ -93,7 +91,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 					GridFSDBFile DBFileInput = gfs.findOne(inputFileName);
 
 					String outputFileName = doc.get("outputFileName", String.class);
-					GridFSDBFile DBFileOutput = gfs.findOne(inputFileName);
+					GridFSDBFile DBFileOutput = gfs.findOne(outputFileName);
 
 					new File(destLocation).mkdirs();
 
@@ -110,7 +108,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 					DBFileOutput.writeTo(pathOutput);
 					count++;
 				}
-				log.info(String.format("%s %d testCaseFiles saved to %s: Homework (%s), question (%s)", log_prepend,
+				log.info(String.format("%s %d testCaseFiles Retrieved and saved to %s: Homework (%s), question (%s)", log_prepend,
 						count, destLocation, homework, question));
 				return true;
 
@@ -278,7 +276,6 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 
 			while (cursor.hasNext()) {
 				Document doc = cursor.next();
-				System.out.println(doc);
 
 				String inputFileName = doc.get("inputFileName", String.class);
 				String outputFileName = doc.get("outputFileName", String.class);
@@ -303,11 +300,13 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 
 	public static void main(String[] args) {
 		System.out.println("hi");
-		String c = "6";
-		File fin = new File("/home/darryl/cTestCases/input-2." + c);
-		File fout = new File("/home/darryl/cTestCases/answer-2." + c);
-		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", c, fin, fout);
-		System.out.println(created);
+//		String c = "6";
+//		File fin = new File("/home/darryl/cTestCases/input-2." + c);
+//		File fout = new File("/home/darryl/cTestCases/answer-2." + c);
+//		boolean created = new TestCasesDAOImpl().createTestCase("hw99", "1", c, fin, fout);
+//		System.out.println(created);
+
+		new TestCasesDAOImpl().getTestCaseFilesToLocal("HW1", "1", "/home/darryl/ABC");
 
 //		System.out.println(new TestCasesDAOImpl().deleteTestCases("h2b", "1"));
 		System.out.println("bye");

@@ -32,8 +32,11 @@ body {
 			placeholder="Enter RIT CS Username" />
 		<form:errors path="username" cssClass="error" />
 		<br>
-		<br>Homework: <form:radiobuttons path="homework"
-			items="${hw.homeworkOptions}" />
+		
+		<br>Homework:
+		<form:select path="homework">
+			<form:options items="${hw.homeworkOptions}" />
+		</form:select>
 		<form:errors path="homework" cssClass="error" />
 
 

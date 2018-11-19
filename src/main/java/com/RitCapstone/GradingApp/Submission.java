@@ -20,8 +20,8 @@ public class Submission {
 	@NotNull(message = "homework is required")
 	private String homework;
 
-	@NotNull(message = "question is required")
-	private String question;
+	@NotNull(message = "problem name is required")
+	private String problemName;
 
 	@NotNull(message = "Select language")
 	private String language;
@@ -33,18 +33,18 @@ public class Submission {
 	public Submission() {
 		this.username = null;
 		this.homework = null;
-		this.question = null;
+		this.problemName = null;
 		this.language = null;
 	}
 
 	@Override
 	public String toString() {
 		try {
-			return "Submission [username=" + username + ", homework=" + homework + ", question=" + question
+			return "Submission [username=" + username + ", homework=" + homework + ", problemName=" + problemName
 					+ ", langauge=" + language + ", codeFiles=" + Arrays.toString(codeFiles) + ", writeupFiles="
 					+ Arrays.toString(writeupFiles) + "]";
 		} catch (NullPointerException e) {
-			return "Submission [username=" + username + ", homework=" + homework + ", question=" + question
+			return "Submission [username=" + username + ", homework=" + homework + ", problemName=" + problemName
 					+ ", langauge=" + language + "]";
 		}
 	}
@@ -85,12 +85,12 @@ public class Submission {
 		this.homework = homework;
 	}
 
-	public String getQuestion() {
-		return question;
+	public String getProblemName() {
+		return problemName;
 	}
 
-	public void setQuestion(String question) {
-		this.question = question;
+	public void setProblemName(String problemName) {
+		this.problemName = problemName;
 	}
 
 	public CommonsMultipartFile[] getCodeFiles() {

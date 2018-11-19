@@ -35,15 +35,15 @@ public class QuestionDAOImpl implements QuestionDAO {
 
 		FindIterable<Document> findIterable = collection.find(searchQuery);
 		MongoCursor<Document> cursor = findIterable.iterator();
-		
-		while(cursor.hasNext()) {
+
+		while (cursor.hasNext()) {
 			Document doc = cursor.next();
-			
+
 			metadata.put("question", doc.get("question", String.class));
 			metadata.put("homework", doc.get("homework", String.class));
 			metadata.put("dueDate", doc.get("dueDate", Date.class));
 			metadata.put("problemName", doc.get("problemName", String.class));
-			
+
 		}
 		return metadata;
 	}
@@ -112,24 +112,50 @@ public class QuestionDAOImpl implements QuestionDAO {
 				map.put("description", description);
 				map.put("dueDate", dueDate);
 
-				// TODO update
 				BasicDBObject newDocument = new BasicDBObject(map);
 				BasicDBObject updateObject = new BasicDBObject();
 				updateObject.put("$set", newDocument);
 				collection.updateOne(searchQuery, updateObject);
 				return true;
 			} catch (Exception e) {
-				log.error(log_prepend + " Exception occurred in createTestCase:" + e.getMessage());
+				log.error(log_prepend + " Exception occurred in updateTestCase:" + e.getMessage());
 				return false;
 			}
 		}
 	}
 
+	@Override
+	public String getQuestionNumber(String homework, String problemName) {
+		String databaseName = MongoFactory.getDatabaseName();
+		
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("homework", homework);
+		map.put("problemName", problemName);
+		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, questionMetadataColl);
+		BasicDBObject searchQuery = new BasicDBObject(map);
+		
+		FindIterable<Document> findIterable = collection.find(searchQuery);
+		MongoCursor<Document> cursor = findIterable.iterator();
+		
+		if(!cursor.hasNext()) {
+			log.warn("No question Number for Problem: "+ problemName);
+			return "";
+		}
+		else{
+			Document doc = cursor.next();
+			String question = doc.get("question", String.class);
+			log.debug("Question number for Problem " + problemName + " is: " + question);
+			return question;
+		}
+		
+
+	}
+
 	public static void main(String[] args) {
 		System.out.println("hi");
-		System.out.println(new QuestionDAOImpl().getQuestionMetaData("hwQM", "1"));
-//				"MaxPerimeter","a new line\n sond line\n THIRD line", new Date()));
-
+//		System.out.println(new QuestionDAOImpl().getQuestionMetaData("hwQM", "1"));
+//		System.out.println(new QuestionDAOImpl().getQuestionNumber("3", "Dourado"));
 		System.out.println("bye");
 	}
+
 }
