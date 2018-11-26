@@ -23,10 +23,10 @@ body {
 </style>
 </head>
 <body>
-	<h3>Hello Professor!</h3>
+	<h3>Hello Grader!</h3>
 	<br>
 	<br>
-	<form:form modelAttribute="professor" method="post">
+	<form:form modelAttribute="grader" method="post">
 
 	Username: <form:input path="username" type="text"
 			placeholder="Enter Username" />
@@ -45,7 +45,6 @@ body {
 		<br>
 		<input type="submit" value="SUBMIT" />
 	</form:form>
-
 
 
 </body>

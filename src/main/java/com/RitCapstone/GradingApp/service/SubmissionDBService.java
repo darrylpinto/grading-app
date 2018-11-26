@@ -48,7 +48,7 @@ public class SubmissionDBService {
 
 		// If homework already there then updateSubmission
 		else {
-			log.debug(String.format("%s Updatinng submission: Homework (%s), username (%s), question (%s)", homework,
+			log.debug(String.format("Updatinng submission: Homework (%s), username (%s), question (%s)", homework,
 					username, question));
 			return submissionDAO.updateSubmission(homework, username, question, zipPath, zipFileName);
 		}

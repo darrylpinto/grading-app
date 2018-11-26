@@ -18,7 +18,6 @@ public class HomeworkOptionsDAOImpl implements HomeworkOptionsDAO {
 	private static final String questionMetadataColl = "questionMetadata";
 
 	private static Logger log = Logger.getLogger(HomeworkOptionsDAOImpl.class);
-	private static String log_prepend = "[HomeworkOptionsDAOImpl]";
 
 	@Override
 	public Map<String, String> getHomeworkOptions() {
@@ -35,7 +34,7 @@ public class HomeworkOptionsDAOImpl implements HomeworkOptionsDAO {
 			homeworkOptions.put(option, option);
 		}
 
-		log.debug(log_prepend + " Homework Options:" + homeworkOptions);
+		log.debug("Homework Options:" + homeworkOptions);
 		return homeworkOptions;
 	}
 
@@ -56,7 +55,7 @@ public class HomeworkOptionsDAOImpl implements HomeworkOptionsDAO {
 
 		}
 
-		log.debug(log_prepend + "*** Question Options:" + questionOptions);
+		log.debug("Question Options:" + questionOptions);
 		return questionOptions;
 
 	}

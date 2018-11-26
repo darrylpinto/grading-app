@@ -16,7 +16,7 @@ public class ProfessorAndGrader {
 	// placeholder on the form to inform the user of incorrect credentials
 
 	public ProfessorAndGrader() {
-		this.username = "ib@rit.edu";
+		this.username = "dp@rit.edu";
 		this.password = "123";
 		this.incorrectCredentials = "";
 	}

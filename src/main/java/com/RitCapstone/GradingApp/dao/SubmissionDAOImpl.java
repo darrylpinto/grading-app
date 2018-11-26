@@ -14,13 +14,12 @@ import com.mongodb.client.MongoCursor;
 public class SubmissionDAOImpl implements SubmissionDAO {
 
 	private static Logger log = Logger.getLogger(SubmissionDAOImpl.class);
-	private static String log_prepend = "[SubmissionDAOImpl]";
-	// Collection name is the hw_name 
-	
+	// Collection name is the hw_name
+
 	public String getSubmissionLocation(String homework, String username, String question) {
 
-		log.info(String.format("%s Finding Submission: Homework (%s), username (%s), question (%s)", log_prepend,
-				homework, username, question));
+		log.info(String.format("Finding Submission: Homework (%s), username (%s), question (%s)", homework, username,
+				question));
 
 		String collectionName = homework;
 		String databaseName = MongoFactory.getDatabaseName();
@@ -39,12 +38,12 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 			doc = cursor.next();
 			String zipPath = doc.get("path", String.class);
 			String zipFile = doc.get("fileName", String.class);
-			
+
 			return zipPath + zipFile;
 
 		} else {
-			log.warn(String.format("%s No submission found: Homework (%s), username (%s), question (%s)", log_prepend,
-					homework, username, question));
+			log.warn(String.format("No submission found: Homework (%s), username (%s), question (%s)", homework,
+					username, question));
 			return null;
 		}
 
@@ -59,8 +58,8 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 	@Override
 	public boolean createSubmission(String homework, String username, String question, String zipPath,
 			String zipFileName) {
-		log.info(String.format("%s Creating new Submission, Homework (%s), username (%s), question (%s)", log_prepend,
-				homework, username, question));
+		log.info(String.format("Creating new Submission, Homework (%s), username (%s), question (%s)", homework,
+				username, question));
 
 		String collectionName = homework;
 		String databaseName = MongoFactory.getDatabaseName();
@@ -80,9 +79,9 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 
 		} catch (Exception e) {
 			log.error(e.getMessage());
-			log.info(String.format(
-					"%s Error while creating new submission for Homework (%s), username (%s), question (%s)",
-					log_prepend, homework, username, question));
+			log.info(
+					String.format("Error while creating new submission for Homework (%s), username (%s), question (%s)",
+							homework, username, question));
 			return false;
 		}
 
@@ -97,8 +96,8 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 	@Override
 	public boolean updateSubmission(String homework, String username, String question, String zipPath,
 			String zipFileName) {
-		log.info(String.format("%s Updating Submission, Homework (%s), username (%s), question (%s)", log_prepend,
-				homework, username, question));
+		log.info(String.format("Updating Submission, Homework (%s), username (%s), question (%s)", homework, username,
+				question));
 
 		String collectionName = homework;
 		String databaseName = MongoFactory.getDatabaseName();
@@ -125,9 +124,8 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 
 		} catch (Exception e) {
 			log.error(e.getMessage());
-			log.error(
-					String.format("%s Error while updating submission for Homework (%s), username (%s), question (%s)",
-							log_prepend, homework, username, question));
+			log.error(String.format("Error while updating submission for Homework (%s), username (%s), question (%s)",
+					homework, username, question));
 			return false;
 		}
 	}

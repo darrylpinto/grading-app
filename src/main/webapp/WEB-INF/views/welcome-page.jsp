@@ -8,7 +8,6 @@
 </head>
 <body>
 
-
 	<h3>ALGORITHMS-GRADING</h3>
 	<form method="get" action="student/showForm">
 		<input type="submit" value="Student" />
@@ -22,13 +21,13 @@
 	<br>
 	<br>
 	<br>
-
-<!-- 	<form method="get" action="grader/showForm">
+	
+	<form method="get" action="grader/authenticate">
 		<input type="submit" value="Grader" />
 	</form>
 	<br>
 	<br>
-	<br> -->
+	<br>
 
 </body>
 </html>

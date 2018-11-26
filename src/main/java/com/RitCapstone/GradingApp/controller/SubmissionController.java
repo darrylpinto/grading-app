@@ -2,6 +2,7 @@ package com.RitCapstone.GradingApp.controller;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Map;
 
 import javax.validation.Valid;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -347,19 +349,19 @@ public class SubmissionController {
 		}
 
 		// delete unzip folder, testcases and code
-//		try {
-//			FileUtils.deleteDirectory(new File(unzipDest));
-//			log.debug(log_prepend + " deleted: " + unzipDest);
-//		} catch (IOException e) {
-//			log.error(log_prepend + " Unable to delete: " + unzipDest);
-//		}
-//
-//		try {
-//			FileUtils.deleteDirectory(new File(unzipTestCaseLoc));
-//			log.debug(log_prepend + " deleted: " + unzipTestCaseLoc);
-//		} catch (IOException e) {
-//			log.error(log_prepend + " Unable to delete: " + unzipTestCaseLoc);
-//		}
+		try {
+			FileUtils.deleteDirectory(new File(unzipDest));
+			log.debug(log_prepend + " deleted: " + unzipDest);
+		} catch (IOException e) {
+			log.error(log_prepend + " Unable to delete: " + unzipDest);
+		}
+
+		try {
+			FileUtils.deleteDirectory(new File(unzipTestCaseLoc));
+			log.debug(log_prepend + " deleted: " + unzipTestCaseLoc);
+		} catch (IOException e) {
+			log.error(log_prepend + " Unable to delete: " + unzipTestCaseLoc);
+		}
 
 		// Show confirmation to students of submitted file
 		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);

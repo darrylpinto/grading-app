@@ -20,7 +20,6 @@ public class QuestionDAOImpl implements QuestionDAO {
 	private static final String questionMetadataColl = "questionMetadata";
 
 	private static Logger log = Logger.getLogger(QuestionDAOImpl.class);
-	private static String log_prepend = "[QuestionDAOImpl]";
 
 	@Override
 	public Map<String, Object> getQuestionMetaData(String homework, String questionNumber) {
@@ -51,8 +50,8 @@ public class QuestionDAOImpl implements QuestionDAO {
 	@Override
 	public boolean createQuestionMetaData(String homework, String questionNumber, String problemName,
 			String description, Date dueDate) {
-		log.info(String.format("%s Creating new questionMetaData, Homework (%s), question (%s)", log_prepend, homework,
-				questionNumber));
+		log.info(
+				String.format("Creating new questionMetaData, Homework (%s), question (%s)", homework, questionNumber));
 
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("homework", homework);
@@ -66,8 +65,8 @@ public class QuestionDAOImpl implements QuestionDAO {
 		MongoCursor<Document> cursor = findIterable.iterator();
 
 		if (cursor.hasNext()) {
-			log.warn(String.format("%s questionMetaData already exists: Homework (%s), question (%s)", log_prepend,
-					homework, questionNumber));
+			log.warn(String.format("questionMetaData already exists: Homework (%s), question (%s)", homework,
+					questionNumber));
 			return false;
 		} else {
 			try {
@@ -78,7 +77,7 @@ public class QuestionDAOImpl implements QuestionDAO {
 				collection.insertOne(doc);
 				return true;
 			} catch (Exception e) {
-				log.error(log_prepend + " Exception occurred in createTestCase:" + e.getMessage());
+				log.error("Exception occurred in createTestCase:" + e.getMessage());
 				return false;
 			}
 		}
@@ -88,8 +87,8 @@ public class QuestionDAOImpl implements QuestionDAO {
 	@Override
 	public boolean updateQuestionMetaData(String homework, String questionNumber, String problemName,
 			String description, Date dueDate) {
-		log.info(String.format("%s Creating new questionMetaData, Homework (%s), question (%s)", log_prepend, homework,
-				questionNumber));
+		log.info(
+				String.format("Creating new questionMetaData, Homework (%s), question (%s)", homework, questionNumber));
 
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("homework", homework);
@@ -103,8 +102,8 @@ public class QuestionDAOImpl implements QuestionDAO {
 		MongoCursor<Document> cursor = findIterable.iterator();
 
 		if (!cursor.hasNext()) {
-			log.warn(String.format("%s questionMetaData does not exist: Homework (%s), question (%s)", log_prepend,
-					homework, questionNumber));
+			log.warn(String.format("questionMetaData does not exist: Homework (%s), question (%s)", homework,
+					questionNumber));
 			return false;
 		} else {
 			try {
@@ -118,7 +117,7 @@ public class QuestionDAOImpl implements QuestionDAO {
 				collection.updateOne(searchQuery, updateObject);
 				return true;
 			} catch (Exception e) {
-				log.error(log_prepend + " Exception occurred in updateTestCase:" + e.getMessage());
+				log.error("Exception occurred in updateTestCase:" + e.getMessage());
 				return false;
 			}
 		}
@@ -126,28 +125,26 @@ public class QuestionDAOImpl implements QuestionDAO {
 
 	@Override
 	public String getQuestionNumber(String homework, String problemName) {
-		String databaseName = MongoFactory.getDatabaseName();
 		
+		String databaseName = MongoFactory.getDatabaseName();
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("homework", homework);
 		map.put("problemName", problemName);
 		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, questionMetadataColl);
 		BasicDBObject searchQuery = new BasicDBObject(map);
-		
+
 		FindIterable<Document> findIterable = collection.find(searchQuery);
 		MongoCursor<Document> cursor = findIterable.iterator();
-		
-		if(!cursor.hasNext()) {
-			log.warn("No question Number for Problem: "+ problemName);
+
+		if (!cursor.hasNext()) {
+			log.warn("No question Number for Problem: " + problemName);
 			return "";
-		}
-		else{
+		} else {
 			Document doc = cursor.next();
 			String question = doc.get("question", String.class);
 			log.debug("Question number for Problem " + problemName + " is: " + question);
 			return question;
 		}
-		
 
 	}
 

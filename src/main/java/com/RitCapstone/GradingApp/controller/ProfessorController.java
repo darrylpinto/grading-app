@@ -44,7 +44,7 @@ import com.RitCapstone.GradingApp.validator.TestCaseValidator;
 @SessionAttributes(value = { "homework", "currentQuestion", "question" })
 public class ProfessorController {
 
-	private static Logger log = Logger.getLogger(SubmissionController.class);
+	private static Logger log = Logger.getLogger(ProfessorController.class);
 
 	@Autowired
 	AuthenticationValidator authValidator;
@@ -109,7 +109,7 @@ public class ProfessorController {
 			log.debug(log_prepend + "Redirecting to /authenticate");
 			return "redirect:authenticate";
 		}
-		log.debug(log_prepend + " Login successful, Redirecting to /authenticate");
+		log.debug(log_prepend + " Login successful, Redirecting to /showForm");
 		return "redirect:showForm";
 
 	}

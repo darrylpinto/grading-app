@@ -26,7 +26,6 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	private static final String FILE_SYSTEM = "fs";
 
 	private static Logger log = Logger.getLogger(TestCasesDAOImpl.class);
-	private static String log_prepend = "[TestCasesDAOImpl]";
 
 	@Override
 	public boolean testCaseExists(String homework, String question, String testCaseNumber) {
@@ -44,14 +43,14 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			MongoCursor<Document> cursor = findIterable.iterator();
 
 			if (!cursor.hasNext()) {
-				log.info(String.format("%s No testCaseFile found: Homework (%s), question (%s) testCaseNumber (%s)",
-						log_prepend, homework, question, testCaseNumber));
+				log.info(String.format("No testCaseFile found: Homework (%s), question (%s) testCaseNumber (%s)",
+						homework, question, testCaseNumber));
 				return false;
 			} else {
 				return true;
 			}
 		} catch (Exception e) {
-			log.error(log_prepend + " Exception occurred in testCasesExists:" + e.getMessage());
+			log.error("Exception occurred in testCasesExists:" + e.getMessage());
 			return false;
 		}
 
@@ -60,8 +59,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	@Override
 	public boolean getTestCaseFilesToLocal(String homework, String question, String destLocation) {
 
-		log.info(String.format("%s Retrieving testCases, Homework (%s), question (%s)", log_prepend, homework,
-				question));
+		log.info(String.format("Retrieving testCases, Homework (%s), question (%s)", homework, question));
 
 		String databaseName = MongoFactory.getDatabaseName();
 
@@ -76,8 +74,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			MongoCursor<Document> cursor = findIterable.iterator();
 
 			if (!cursor.hasNext()) {
-				log.warn(String.format("%s No testCaseFiles found, Homework (%s), question (%s)", log_prepend, homework,
-						question));
+				log.warn(String.format("No testCaseFiles found, Homework (%s), question (%s)", homework, question));
 				return false;
 			} else {
 
@@ -108,14 +105,14 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 					DBFileOutput.writeTo(pathOutput);
 					count++;
 				}
-				log.info(String.format("%s %d testCaseFiles Retrieved and saved to %s: Homework (%s), question (%s)", log_prepend,
+				log.info(String.format("%d testCaseFiles Retrieved and saved to %s: Homework (%s), question (%s)",
 						count, destLocation, homework, question));
 				return true;
 
 			}
 
 		} catch (Exception e) {
-			log.error(log_prepend + " Exception occurred in getTestCaseFiles:" + e.getMessage());
+			log.error("Exception occurred in getTestCaseFiles:" + e.getMessage());
 			return false;
 		}
 
@@ -125,8 +122,8 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	public boolean createTestCase(String homework, String question, String testCaseNumber, File testcaseInput,
 			File testcaseOutput) {
 
-		log.info(String.format("%s Creating new testCase, Homework (%s), question (%s), testCaseNumber (%s)",
-				log_prepend, homework, question, testCaseNumber));
+		log.info(String.format("Creating new testCase, Homework (%s), question (%s), testCaseNumber (%s)", homework,
+				question, testCaseNumber));
 
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("homework", homework);
@@ -145,8 +142,8 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 
 			if (cursor.hasNext()) {
 				log.warn(String.format(
-						"%s TestCaseNumber Document already exists: Homework (%s), question (%s), testCaseNumber (%s)",
-						log_prepend, homework, question, testCaseNumber));
+						"TestCaseNumber Document already exists: Homework (%s), question (%s), testCaseNumber (%s)",
+						homework, question, testCaseNumber));
 				return false;
 
 			} else {
@@ -172,12 +169,12 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 				collection.insertOne(doc);
 
 				log.info(String.format(
-						"%s created new TestCaseNumber Document [fileName: %s]: Homework (%s), question (%s), testCaseNumber (%s)",
-						log_prepend, inputFileName, homework, question, testCaseNumber));
+						"Created new TestCaseNumber Document [fileName: %s]: Homework (%s), question (%s), testCaseNumber (%s)",
+						inputFileName, homework, question, testCaseNumber));
 				return true;
 			}
 		} catch (Exception e) {
-			log.error(log_prepend + " Exception occurred in createTestCase:" + e.getMessage());
+			log.error("Exception occurred in createTestCase:" + e.getMessage());
 			return false;
 		}
 
@@ -187,7 +184,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	public boolean updateTestCase(String homework, String question, String testCaseNumber, File testcaseInput,
 			File testcaseOutput) {
 
-		log.info(String.format("%s Updating testCase, Homework (%s), question (%s), testCaseNumber (%s)", log_prepend,
+		log.info(String.format("%Updating testCase, Homework (%s), question (%s), testCaseNumber (%s)",
 				homework, question, testCaseNumber));
 
 		String inputFileName = String.format("%s_%s_%s_input", homework, question, testCaseNumber);
@@ -208,8 +205,8 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 
 		if (!cursor.hasNext()) {
 			log.error(String.format(
-					"%s TestCaseNumber Document does not exist: Homework (%s), question (%s), testCaseNumber (%s)",
-					log_prepend, homework, question, testCaseNumber));
+					"TestCaseNumber Document does not exist: Homework (%s), question (%s), testCaseNumber (%s)",
+					 homework, question, testCaseNumber));
 			return false;
 		}
 		try {
@@ -223,7 +220,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			// oldFileName will be the same as newFileName as logic for naming files is
 			// homework_question_testCaseNumber_[input or output]
 
-			log.debug(log_prepend + " stale testCaseFiles removed");
+			log.debug("stale testCaseFiles removed");
 
 			GridFSInputFile gfsInputFile = gfs.createFile(testcaseInput);
 			gfsInputFile.setFilename(inputFileName);
@@ -232,7 +229,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			GridFSInputFile gfsOutputFile = gfs.createFile(testcaseOutput);
 			gfsOutputFile.setFilename(outputFileName);
 			gfsOutputFile.save();
-			log.debug(log_prepend + " added new testCaseFiles: " + inputFileName + ", " + outputFileName);
+			log.debug("added new testCaseFiles: " + inputFileName + ", " + outputFileName);
 
 			BasicDBObject newDocument = new BasicDBObject();
 			newDocument.put("inputFileName", inputFileName);
@@ -247,7 +244,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			return true;
 
 		} catch (Exception e) {
-			log.error(log_prepend + " Exception occurred in updateTestCase:" + e.getMessage());
+			log.error("Exception occurred in updateTestCase:" + e.getMessage());
 			return false;
 		}
 	}
@@ -255,7 +252,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 	@Override
 	public boolean deleteTestCases(String homework, String question) {
 
-		log.info(String.format("%s Deleting testCases with Homework (%s), question (%s)", log_prepend, homework,
+		log.info(String.format("Deleting testCases with Homework (%s), question (%s)", homework,
 				question));
 
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -292,7 +289,7 @@ public class TestCasesDAOImpl implements TestCasesDAO {
 			return true;
 
 		} catch (Exception e) {
-			log.error(log_prepend + " Error while deleting testCases: " + e.getMessage());
+			log.error("Error while deleting testCases: " + e.getMessage());
 			return false;
 		}
 

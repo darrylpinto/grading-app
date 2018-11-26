@@ -40,7 +40,7 @@ public class OnlineCompileAPIService {
 		} else if (extension.equals("C++")) {
 			jsonValidCodeString = combineCPP(listOfFiles);
 		} else {
-			throw new Exception("unsupported format received: "+ extension);
+			throw new Exception("unsupported format received: " + extension);
 		}
 
 		return jsonValidCodeString;
@@ -192,7 +192,7 @@ public class OnlineCompileAPIService {
 			String token = (String) postResponseJson.get("token");
 			log.debug("Token: " + token);
 			JSONObject getResponseJson = null;
-
+			long statusId = -10;
 			while (true) {
 				Thread.sleep(500);
 				String getURL = String.format("https://api.judge0.com/submissions/%s?base64_encoded=false", token);
@@ -217,7 +217,7 @@ public class OnlineCompileAPIService {
 				 */
 				getResponseJson = (JSONObject) parser.parse(GETResponseBody);
 				JSONObject getResponseJson_status_ = (JSONObject) getResponseJson.get("status");
-				long statusId = (Long) getResponseJson_status_.get("id");
+				statusId = (Long) getResponseJson_status_.get("id");
 
 				if ((statusId == 1) || (statusId == 2)) {
 					// job is not completed, check again in sometime
@@ -225,8 +225,12 @@ public class OnlineCompileAPIService {
 					break;
 				}
 			}
-			System.out.println(getResponseJson);
+			log.debug("Response: " + getResponseJson);
 			String output = (String) getResponseJson.get("stdout");
+			if (statusId == 5) {
+				return "**time limit exceeded**";
+			}
+
 			return output.trim();
 
 		} catch (Exception e) {
@@ -241,13 +245,13 @@ public class OnlineCompileAPIService {
 		OnlineCompileAPIService api = new OnlineCompileAPIService();
 		String code = api.getJSONValidStringCode(
 				"/home/darryl/eclipse-workspace/grading-app/src/main/java/com/RitCapstone/GradingApp/service/temp",
-				"IntervalsBreaks","Java");
-		
-		System.out.println("@@@"+code+"@@@");
+				"IntervalsBreaks", "Java");
+
+		System.out.println("@@@" + code + "@@@");
 //		String _input = api.getJSONValidTestCase(new File("/home/darryl/cTestCases/input-2.6"));
 //		String output = api.useJudge0API(code, "Java", _input);
 //		System.out.println(output);
-		
+
 		System.out.println("bye");
 	}
 
