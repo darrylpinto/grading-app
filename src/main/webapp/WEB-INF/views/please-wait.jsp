@@ -6,7 +6,7 @@
 <title>Loading...</title>
 
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0;URL=showConfirmation">
+<meta http-equiv="refresh" content="0;URL=runStudentCode">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 .loader {
@@ -39,6 +39,6 @@
 </head>
 <body>
 <div class="loader"></div>
-
+<p> Please resubmit the code if loading continues more than a minute </p>
 </body>
 </html>

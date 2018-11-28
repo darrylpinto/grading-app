@@ -26,6 +26,7 @@ import com.RitCapstone.GradingApp.HomeworkOptions;
 import com.RitCapstone.GradingApp.ProfessorAndGrader;
 import com.RitCapstone.GradingApp.service.GradeHomeworkService;
 import com.RitCapstone.GradingApp.service.HomeworkOptionsService;
+import com.RitCapstone.GradingApp.service.SubmissionDBService;
 import com.RitCapstone.GradingApp.validator.AuthenticationValidator;
 
 @Controller
@@ -43,6 +44,9 @@ public class GraderController {
 
 	@Autowired
 	GradeHomeworkService gradeHomeworkService;
+
+	@Autowired
+	SubmissionDBService submissionDBService;
 
 	/**
 	 * This method will trim all the strings received from form data
@@ -129,8 +133,6 @@ public class GraderController {
 			return "redirect:showForm";
 		} else {
 			// redirect to page where students are listed
-//			String jspToDisplay = "graderView/list-hw-by-student";
-//			log.debug("Displaying " + jspToDisplay);
 			return "redirect:showStudentList";
 		}
 
@@ -196,9 +198,11 @@ public class GraderController {
 
 		String log_prepend = "[GET /student (" + studentName + ")]";
 		String jspToDisplay = "graderView/list-question-for-student";
+
 		log.debug(log_prepend + " Displaying " + jspToDisplay);
 		String homework = gradeHomework.getHomework();
 		model.put("questionListForStudent", gradeHomeworkService.getListOfQuestionsForStudent(homework, studentName));
+		model.put("studentName", studentName);
 		return jspToDisplay;
 
 	}
@@ -209,9 +213,26 @@ public class GraderController {
 
 		String log_prepend = "[GET /question (" + questionName + ")]";
 		String jspToDisplay = "graderView/list-student-for-question";
+
 		log.debug(log_prepend + " Displaying " + jspToDisplay);
 		String homework = gradeHomework.getHomework();
-		model.put("studentListForQuestion", gradeHomeworkService.getListOfQuestionsForStudent(homework, questionName));
+		model.put("studentListForQuestion", gradeHomeworkService.getListOfStudentsForQuestion(homework, questionName));
+		model.put("questionName", questionName);
 		return jspToDisplay;
+	}
+
+	@GetMapping("/questionStudent")
+	public String showGradingView(@RequestParam("questionName") String questionName,
+			@RequestParam("studentName") String studentName, Map<String, Object> model,
+			@SessionAttribute("gradeHomework") GradeHomework gradeHomework) {
+
+		String log_prepend = "[GET /questionStudent (" + questionName + ", " + studentName + ")]";
+		String homework = gradeHomework.getHomework();
+		String submissionLoc = submissionDBService.getSubmission(homework, studentName, questionName);
+		log.debug(log_prepend +" Submission Location: "+ submissionLoc);
+		
+		// TODO get contents to display the view 
+		
+		return "TEMP";
 	}
 }

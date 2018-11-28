@@ -1,5 +1,8 @@
 package com.RitCapstone.GradingApp.dao;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
@@ -128,6 +131,93 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 					homework, username, question));
 			return false;
 		}
+	}
+
+	@Override
+	public boolean addOutputAndTestCaseResults(String homework, String username, String question,
+			List<String> codeOutput, List<String> codeStatus) {
+
+		log.debug(String.format(
+				"adding output and test case results" + "for Submission: Homework (%s), username (%s), question (%s)",
+				homework, username, question));
+
+		boolean isUpdate = false;
+		boolean success = addOrUpdateTestCasesAndOutput(homework, username, question, codeOutput, codeStatus, isUpdate);
+
+		if (!success) {
+			log.warn(String.format(
+					"submission with no codeStatus and "
+							+ " no codeOutput not found: Homework (%s), username (%s), question (%s)",
+					homework, username, question));
+		} else {
+			log.debug(String.format("added codeOutput and codeStatus to: question [%s], username [%s], homework[%s]",
+					question, username, homework));
+		}
+		return success;
+
+	}
+
+	@Override
+	public boolean updateOutputAndTestCaseResults(String homework, String username, String question,
+			List<String> codeOutput, List<String> codeStatus) {
+
+		log.debug(String.format("updating output and test case results "
+				+ "for Submission: Homework (%s), username (%s), question (%s)", homework, username, question));
+
+		boolean isUpdate = true;
+		boolean success = addOrUpdateTestCasesAndOutput(homework, username, question, codeOutput, codeStatus, isUpdate);
+
+		if (!success) {
+			log.warn(String.format(
+					"submission with already present codeStatus and "
+							+ " already present codeOutput not found: Homework (%s), username (%s), question (%s)",
+					homework, username, question));
+		} else {
+			log.debug(String.format("updated codeOutput and codeStatus to: question [%s], username [%s], homework[%s]",
+					question, username, homework));
+		}
+		return success;
+	}
+
+	private boolean addOrUpdateTestCasesAndOutput(String homework, String username, String question,
+			List<String> codeOutput, List<String> codeStatus, boolean isUpdate) {
+
+		String collectionName = homework;
+		String databaseName = MongoFactory.getDatabaseName();
+
+		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, collectionName);
+
+		BasicDBObject searchQuery = new BasicDBObject();
+		searchQuery.put("username", username);
+		searchQuery.put("question", question);
+		searchQuery.put("codeOutput", new BasicDBObject("$exists", isUpdate));
+		searchQuery.put("codeStatus", new BasicDBObject("$exists", isUpdate));
+
+		FindIterable<Document> findIterable = collection.find(searchQuery);
+		MongoCursor<Document> cursor = findIterable.iterator();
+
+		if (!cursor.hasNext()) {
+			return false;
+		} else {
+
+			BasicDBObject newDocument = new BasicDBObject();
+			newDocument.put("codeOutput", codeOutput);
+			newDocument.put("codeStatus", codeStatus);
+
+			BasicDBObject updateObject = new BasicDBObject();
+			updateObject.put("$set", newDocument);
+
+			collection.updateOne(searchQuery, updateObject);
+			return true;
+		}
+	}
+
+	public static void main(String[] args) {
+
+//		new SubmissionDAOImpl().addOutputAndTestCaseResults("Hw1", "TEST@rit.edu", "2", null, null);
+
+//		new SubmissionDAOImpl().updateOutputAndTestCaseResults("Hw1", "TEST@rit.edu", "2", new ArrayList<>(),
+//				new ArrayList<>());
 	}
 
 }

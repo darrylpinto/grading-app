@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +46,8 @@ public class SubmissionController {
 
 	private static final String PASS = "Passed";
 	private static final String FAIL = "Failed";
+
+	private static HashMap<String, Object> submissionConfirmData;
 
 	@Autowired
 	SubmissionValidator submissionValidator;
@@ -222,10 +225,10 @@ public class SubmissionController {
 	 * @param submission Session Attribute
 	 * @return jsp file to display
 	 */
-	@GetMapping("/showConfirmation")
-	public String showConfirmation(@SessionAttribute("submission") Submission submission, Model model) {
+	@GetMapping("/runStudentCode")
+	public String saveAndRunStudentCode(@SessionAttribute("submission") Submission submission) {
 
-		String log_prepend = "[GET /showConfirmation]";
+		String log_prepend = "[GET /runStudentCode]";
 		String homework = submission.getHomework();
 		String username = submission.getUsername();
 		String problemName = submission.getProblemName();
@@ -300,19 +303,18 @@ public class SubmissionController {
 		Collections.sort(inputTestCaseFiles);
 		Collections.sort(outputTestCaseFiles);
 
-		ArrayList<String> outputList = new ArrayList<>();
+		ArrayList<String> codeOutputList = new ArrayList<>();
 
 		// All the files in test cases need to be run in API
 		for (File testCaseFile : inputTestCaseFiles) {
 			String testCaseString = compileAPIService.getJSONValidTestCase(testCaseFile);
-			outputList.add(compileAPIService.useJudge0API(jsonValidString, language, testCaseString));
+			codeOutputList.add(compileAPIService.useJudge0API(jsonValidString, language, testCaseString));
 
 		}
 
 		// codeStatus: keeps track of code passed or failed the test case
 		ArrayList<String> codeStatus = new ArrayList<>();
 		ArrayList<String> expectedOutputList = new ArrayList<>();
-		
 
 		// Test case passed or not, evaluate the output with testcases
 		for (int i = 0; i < outputTestCaseFiles.size(); i++) {
@@ -325,11 +327,11 @@ public class SubmissionController {
 				log.error("Output File not found!");
 				fileUploadedError = true;
 			}
-			
+
 			String codeOutput = "";
-			
+
 			try {
-				codeOutput = outputList.get(i).trim();
+				codeOutput = codeOutputList.get(i).trim();
 			} catch (NullPointerException e) {
 				codeOutput = "-";
 			}
@@ -337,16 +339,20 @@ public class SubmissionController {
 			if (fileUploadedError) {
 				codeStatus.add("Output file not uploaded; Contact Professor!");
 				expectedOutputList.add("error");
-		
+
 			} else if (expectedOutput.equals(codeOutput)) {
 				codeStatus.add(PASS);
 				expectedOutputList.add(expectedOutput);
-			
+
 			} else {
 				codeStatus.add(FAIL);
 				expectedOutputList.add(expectedOutput);
 			}
 		}
+
+		// TODO Save the codeOutput and results to DB
+		submissionDBService.saveOutputAndTestCasesOutput(homework, username, questionNumber, codeOutputList,
+				codeStatus);
 
 		// delete unzip folder, testcases and code
 		try {
@@ -367,14 +373,22 @@ public class SubmissionController {
 		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);
 		List<String> writeupFileNames = submission.getFileNames(submission.writeupFileType);
 
-		model.addAttribute("codeFileNames", codeFileNames);
-		model.addAttribute("writeupFileNames", writeupFileNames);
-		model.addAttribute("outputList", outputList);
-		model.addAttribute("codeStatus", codeStatus);
-		model.addAttribute("expectedOutput", expectedOutputList);
-		
+		SubmissionController.submissionConfirmData = new HashMap<>();
+		submissionConfirmData.put("codeFileNames", codeFileNames);
+		submissionConfirmData.put("writeupFileNames", writeupFileNames);
+		submissionConfirmData.put("outputList", codeOutputList);
+		submissionConfirmData.put("codeStatus", codeStatus);
+		submissionConfirmData.put("expectedOutput", expectedOutputList);
+
 		log.debug(log_prepend + "Displaying: student-confirmation");
 
+		return "redirect:showConfirmation";
+	}
+
+	@GetMapping("/showConfirmation")
+	public String showConfirmation(Model model) {
+		log.debug("[GET /showConfirmation] Displaying: student-confirmation");
+		model.addAllAttributes(submissionConfirmData);
 		return "student-confirmation";
 	}
 

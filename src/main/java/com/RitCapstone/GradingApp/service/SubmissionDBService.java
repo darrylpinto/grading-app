@@ -1,5 +1,7 @@
 package com.RitCapstone.GradingApp.service;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,8 @@ public class SubmissionDBService {
 
 	@Autowired
 	SubmissionDAO submissionDAO;
+
+//	SubmissionDAO submissionDAO = new SubmissionDAOImpl(); // use this for testing individual class
 
 	private static Logger log = Logger.getLogger(SubmissionDBService.class);
 
@@ -55,4 +59,29 @@ public class SubmissionDBService {
 
 	}
 
+	public boolean saveOutputAndTestCasesOutput(String homework, String username, String question,
+			List<String> codeOutput, List<String> codeStatus) {
+
+		try {
+			boolean tryAdd = submissionDAO.addOutputAndTestCaseResults(homework, username, question, codeOutput,
+					codeStatus);
+			boolean tryUpdate = false;
+			if (!tryAdd) {
+				tryUpdate = submissionDAO.updateOutputAndTestCaseResults(homework, username, question, codeOutput,
+						codeStatus);
+			}
+
+			return tryUpdate;
+
+		} catch (Exception e) {
+			log.error("Error in saveOutputAndTestCasesOutput:" + e.getMessage());
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public static void main(String[] args) {
+//		new SubmissionDBService().saveOutputAndTestCasesOutput("Hw1", "test2@rit.edu", "2", new ArrayList<>(), new ArrayList<>());
+//		new SubmissionDBService().saveOutputAndTestCasesOutput("Hw1", "test2@rit.edu", "2", null, null);
+	}
 }
