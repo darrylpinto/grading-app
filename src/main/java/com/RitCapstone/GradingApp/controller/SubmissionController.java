@@ -41,13 +41,11 @@ import com.RitCapstone.GradingApp.validator.SubmissionValidator;
 
 @Controller
 @RequestMapping("/student")
-@SessionAttributes("submission")
+@SessionAttributes(value = { "submission", "submissionConfirmationMap" })
 public class SubmissionController {
 
 	private static final String PASS = "Passed";
 	private static final String FAIL = "Failed";
-
-	private static HashMap<String, Object> submissionConfirmData;
 
 	@Autowired
 	SubmissionValidator submissionValidator;
@@ -226,7 +224,7 @@ public class SubmissionController {
 	 * @return jsp file to display
 	 */
 	@GetMapping("/runStudentCode")
-	public String saveAndRunStudentCode(@SessionAttribute("submission") Submission submission) {
+	public String saveAndRunStudentCode(@SessionAttribute("submission") Submission submission, Model model) {
 
 		String log_prepend = "[GET /runStudentCode]";
 		String homework = submission.getHomework();
@@ -240,8 +238,7 @@ public class SubmissionController {
 		String zipPath = fileService.saveStudentSubmission(homework, username, questionNumber,
 				submission.getCodeFiles(), submission.getWriteupFiles());
 
-		// save the information of homework, question, username, and submission location
-		// to mongoDB
+		// save homework, question, username, and submission location to mongoDB
 		boolean savedSubmission = submissionDBService.saveSubmission(homework, username, questionNumber, zipPath,
 				questionNumber + ".zip");
 		if (!savedSubmission) {
@@ -350,9 +347,9 @@ public class SubmissionController {
 			}
 		}
 
-		// TODO Save the codeOutput and results to DB
-		submissionDBService.saveOutputAndTestCasesOutput(homework, username, questionNumber, codeOutputList,
-				codeStatus);
+		// Save the codeOutput, expectedOutput and codeStatus to DB
+		submissionDBService.saveOutputsAndResults(homework, username, questionNumber, codeOutputList,
+				 expectedOutputList, codeStatus);
 
 		// delete unzip folder, testcases and code
 		try {
@@ -373,20 +370,23 @@ public class SubmissionController {
 		List<String> codeFileNames = submission.getFileNames(submission.codeFileType);
 		List<String> writeupFileNames = submission.getFileNames(submission.writeupFileType);
 
-		SubmissionController.submissionConfirmData = new HashMap<>();
+		HashMap<String, Object> submissionConfirmData = new HashMap<>();
+
 		submissionConfirmData.put("codeFileNames", codeFileNames);
 		submissionConfirmData.put("writeupFileNames", writeupFileNames);
 		submissionConfirmData.put("outputList", codeOutputList);
 		submissionConfirmData.put("codeStatus", codeStatus);
 		submissionConfirmData.put("expectedOutput", expectedOutputList);
 
+		model.addAttribute("submissionConfirmationMap", submissionConfirmData);
 		log.debug(log_prepend + "Displaying: student-confirmation");
 
 		return "redirect:showConfirmation";
 	}
 
 	@GetMapping("/showConfirmation")
-	public String showConfirmation(Model model) {
+	public String showConfirmation(
+			@SessionAttribute("submissionConfirmationMap") Map<String, Object> submissionConfirmData, Model model) {
 		log.debug("[GET /showConfirmation] Displaying: student-confirmation");
 		model.addAllAttributes(submissionConfirmData);
 		return "student-confirmation";

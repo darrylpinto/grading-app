@@ -16,6 +16,9 @@
 		base-package="com.RitCapstone.GradingApp" />
 
 	<mvc:annotation-driven />
+	
+	<!-- To map URL to file system path  -->
+	<mvc:resources mapping="/system/**" location="file:///home/darryl/" />
 
 	<!-- Define Spring MVC view resolver -->
 	<bean

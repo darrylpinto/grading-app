@@ -3,5 +3,5 @@ target/
 .settings/
 .project
 .pydevproject
-src/main/resources/judge0Response.json
+src/main/resources/judge0Response.txt
 src/main/java/com/RitCapstone/GradingApp/service/temp/

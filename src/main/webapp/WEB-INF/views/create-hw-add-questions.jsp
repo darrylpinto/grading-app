@@ -28,7 +28,7 @@ body {
 </style>
 
 <body>
-	<h2>Add Questions for Homework ${homework.id}</h2>
+	<h3>Add Questions for Homework ${homework.id}</h3>
 
 	<form:form modelAttribute="question" enctype="multipart/form-data"
 		method="post">

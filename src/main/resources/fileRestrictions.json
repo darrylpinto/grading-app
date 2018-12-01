@@ -3,7 +3,6 @@
 	"Total maximum Size String": "1.5MB",
 	"writeupExtension": [
 		".pdf",
-		".docx",
 		".txt"
 	],
 	"codeExtension": [

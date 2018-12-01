@@ -17,12 +17,25 @@ import com.mongodb.client.MongoCursor;
 public class SubmissionDAOImpl implements SubmissionDAO {
 
 	private static Logger log = Logger.getLogger(SubmissionDAOImpl.class);
+//	private static final String filenameOption = "fileName";
+	private static final String pathOption = "path";
+	private static final String pathAndFileOption = "pathAndFile";
 	// Collection name is the hw_name
 
-	public String getSubmissionLocation(String homework, String username, String question) {
+	@Override
+	public String getSubmissionPath(String homework, String username, String question) {
+		return getSubmissionFileOrPath(homework, username, question, pathOption);
+	}
 
-		log.info(String.format("Finding Submission: Homework (%s), username (%s), question (%s)", homework, username,
-				question));
+	@Override
+	public String getSubmissionLocation(String homework, String username, String question) {
+		return getSubmissionFileOrPath(homework, username, question, pathAndFileOption);
+	}
+
+	private String getSubmissionFileOrPath(String homework, String username, String question, String option) {
+
+		log.info(String.format("Retrieving [%s]: Homework (%s), username (%s), question (%s)", option, homework,
+				username, question));
 
 		String collectionName = homework;
 		String databaseName = MongoFactory.getDatabaseName();
@@ -36,13 +49,26 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 		FindIterable<Document> findIterable = collection.find(searchQuery);
 		MongoCursor<Document> cursor = findIterable.iterator();
 
-		Document doc;
 		if (cursor.hasNext()) {
-			doc = cursor.next();
-			String zipPath = doc.get("path", String.class);
-			String zipFile = doc.get("fileName", String.class);
+			Document doc = cursor.next();
+			String path = doc.get("path", String.class);
+			String filename = doc.get("fileName", String.class);
 
-			return zipPath + zipFile;
+			switch (option) {
+
+			case pathAndFileOption:
+				return path + filename;
+
+//			case filenameOption:
+//				return filename;
+
+			case pathOption:
+				return path;
+
+			default:
+				log.warn("ENTERED THE DEFUALT BLOCK OF SWITCH CASE: option=" + option);
+				return null;
+			}
 
 		} else {
 			log.warn(String.format("No submission found: Homework (%s), username (%s), question (%s)", homework,
@@ -134,15 +160,16 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 	}
 
 	@Override
-	public boolean addOutputAndTestCaseResults(String homework, String username, String question,
-			List<String> codeOutput, List<String> codeStatus) {
+	public boolean addOutputListsAndResults(String homework, String username, String question, List<String> codeOutput,
+			List<String> expectedOutput, List<String> codeStatus) {
 
 		log.debug(String.format(
 				"adding output and test case results" + "for Submission: Homework (%s), username (%s), question (%s)",
 				homework, username, question));
 
 		boolean isUpdate = false;
-		boolean success = addOrUpdateTestCasesAndOutput(homework, username, question, codeOutput, codeStatus, isUpdate);
+		boolean success = addOrUpdateOutputsAndResults(homework, username, question, codeOutput, expectedOutput,
+				codeStatus, isUpdate);
 
 		if (!success) {
 			log.warn(String.format(
@@ -158,14 +185,15 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 	}
 
 	@Override
-	public boolean updateOutputAndTestCaseResults(String homework, String username, String question,
-			List<String> codeOutput, List<String> codeStatus) {
+	public boolean updateOutputListsAndResults(String homework, String username, String question,
+			List<String> codeOutput, List<String> expectedOutput, List<String> codeStatus) {
 
 		log.debug(String.format("updating output and test case results "
 				+ "for Submission: Homework (%s), username (%s), question (%s)", homework, username, question));
 
 		boolean isUpdate = true;
-		boolean success = addOrUpdateTestCasesAndOutput(homework, username, question, codeOutput, codeStatus, isUpdate);
+		boolean success = addOrUpdateOutputsAndResults(homework, username, question, codeOutput, expectedOutput,
+				codeStatus, isUpdate);
 
 		if (!success) {
 			log.warn(String.format(
@@ -179,8 +207,57 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 		return success;
 	}
 
-	private boolean addOrUpdateTestCasesAndOutput(String homework, String username, String question,
-			List<String> codeOutput, List<String> codeStatus, boolean isUpdate) {
+	@Override
+	public List<String> getCodeOutput(String homework, String username, String question) {
+		String typeToReturn = "codeOutput";
+		return getRequiredListFromSubmission(homework, username, question, typeToReturn);
+	}
+
+	@Override
+	public List<String> getTestcaseResult(String homework, String username, String question) {
+		String typeToReturn = "codeStatus";
+		return getRequiredListFromSubmission(homework, username, question, typeToReturn);
+	}
+
+	@Override
+	public List<String> getExpectedOutput(String homework, String username, String question) {
+		String typeToReturn = "expectedOutput";
+		return getRequiredListFromSubmission(homework, username, question, typeToReturn);
+	}
+
+	private List<String> getRequiredListFromSubmission(String homework, String username, String question,
+			String typeToReturn) {
+
+		log.debug("Retrieving " + typeToReturn);
+		String collectionName = homework;
+		String databaseName = MongoFactory.getDatabaseName();
+		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, collectionName);
+
+		BasicDBObject searchQuery = new BasicDBObject();
+		searchQuery.put("username", username);
+		searchQuery.put("question", question);
+
+		FindIterable<Document> findIterable = collection.find(searchQuery);
+		MongoCursor<Document> cursor = findIterable.iterator();
+
+		if (cursor.hasNext()) {
+			Document doc = cursor.next();
+			List<String> toReturn = doc.get(typeToReturn, List.class);
+			// Will cause ClassCastException if list does not contain only String
+
+			log.debug("Retrieved [" + typeToReturn + "]:" + toReturn);
+			return toReturn;
+
+		} else {
+			log.warn(String.format("No submission found: Homework (%s), username (%s), question (%s)", homework,
+					username, question));
+			return null;
+		}
+
+	}
+
+	private boolean addOrUpdateOutputsAndResults(String homework, String username, String question,
+			List<String> codeOutput, List<String> expectedOutput, List<String> codeStatus, boolean isUpdate) {
 
 		String collectionName = homework;
 		String databaseName = MongoFactory.getDatabaseName();
@@ -192,6 +269,7 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 		searchQuery.put("question", question);
 		searchQuery.put("codeOutput", new BasicDBObject("$exists", isUpdate));
 		searchQuery.put("codeStatus", new BasicDBObject("$exists", isUpdate));
+		searchQuery.put("expectedOutput", new BasicDBObject("$exists", isUpdate));
 
 		FindIterable<Document> findIterable = collection.find(searchQuery);
 		MongoCursor<Document> cursor = findIterable.iterator();
@@ -202,6 +280,7 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 
 			BasicDBObject newDocument = new BasicDBObject();
 			newDocument.put("codeOutput", codeOutput);
+			newDocument.put("expectedOutput", expectedOutput);
 			newDocument.put("codeStatus", codeStatus);
 
 			BasicDBObject updateObject = new BasicDBObject();
@@ -218,6 +297,8 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 
 //		new SubmissionDAOImpl().updateOutputAndTestCaseResults("Hw1", "TEST@rit.edu", "2", new ArrayList<>(),
 //				new ArrayList<>());
+
+//		new SubmissionDAOImpl().getTestcaseResult("Hw1", "tezt10@rit.edu", "1");
 	}
 
 }

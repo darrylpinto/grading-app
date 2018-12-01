@@ -37,7 +37,7 @@ body {
 </head>
 
 <body>
-	<h2>Create New Homework</h2>
+	<h3>Create New Homework</h3>
 	<br>
 	<br>
 	<form:form modelAttribute="homework" method="post">

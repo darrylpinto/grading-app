@@ -21,10 +21,10 @@
 	<form:form modelAttribute="submission" method="post"
 		enctype="multipart/form-data">
 		
-	RIT CS Username: ${submission.username}
+	RIT CS Username: <b>${submission.username}</b>
 		<br>
 		<br>
- 	 Homework: ${submission.homework}
+ 	 Homework: <b> ${submission.homework} </b>
 		<br>
 		<br>
 

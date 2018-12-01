@@ -1,5 +1,6 @@
 package com.RitCapstone.GradingApp.service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -22,9 +23,15 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
 
 @Service
 public class FileService {
@@ -32,6 +39,7 @@ public class FileService {
 	private static Logger log = Logger.getLogger(FileService.class);
 
 	private static final String fileRestrictionJSON = "fileRestrictions.json";
+	private static final String mappingResourcesJSON = "mappingResources.json";
 
 	private static final String DIRECTORY_TO_SAVE = "uploads_from_springMVC";
 	private static final String chosenDir = System.getProperty("user.dir") + File.separator + DIRECTORY_TO_SAVE
@@ -235,7 +243,12 @@ public class FileService {
 			zipInputStream.close();
 			return true;
 
-		} catch (IOException e) {
+		} catch (FileNotFoundException e) {
+			log.error(zipFile + " does not exist!");
+			return false;
+		}
+
+		catch (IOException e) {
 			log.error(e.getMessage());
 			return false;
 		}
@@ -278,8 +291,7 @@ public class FileService {
 			for (File file : listOfFiles) {
 
 				String filename = file.getName();
-				String[] _parts = filename.trim().split("\\.");
-				String extension = "." + _parts[_parts.length - 1];
+				String extension = getExtension(file);
 
 				if (!codeExtensionSet.contains(extension)) {
 					file.delete();
@@ -305,6 +317,17 @@ public class FileService {
 		return dir.listFiles();
 	}
 
+	public ArrayList<String> getFilenames(String dirName) {
+		File[] files = getFiles(dirName);
+		ArrayList<String> filenames = new ArrayList<>();
+
+		for (File file : files) {
+			filenames.add(file.getName());
+		}
+
+		return filenames;
+	}
+
 	public ArrayList<String> getMultipartFileNames(CommonsMultipartFile[] files) {
 
 		ArrayList<String> names = new ArrayList<>();
@@ -318,19 +341,63 @@ public class FileService {
 
 	public String getExtension(File file) {
 
-		String filename = file.getName();
-		String[] _parts = filename.trim().split("\\.");
+		String[] _parts = file.getName().trim().split("\\.");
 		String extension = "." + _parts[_parts.length - 1];
 		return extension;
 
 	}
 
 	public String getFileContent(File file) throws FileNotFoundException {
-	    Scanner sc = new Scanner(file); 
-	    sc.useDelimiter("\\Z"); 
-	    String contents = sc.next();
-	    sc.close();
+		Scanner sc = new Scanner(file);
+		sc.useDelimiter("\\Z");
+		String contents = sc.next();
+		sc.close();
 		return contents;
+	}
+
+	public String getURLLocation(String fileLocation) throws IOException, ParseException {
+		ClassLoader classLoader = FileService.class.getClassLoader();
+		File jsonFile = new File(classLoader.getResource(mappingResourcesJSON).getFile());
+
+		JSONParser parser = new JSONParser();
+
+		JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(jsonFile));
+		String fileServerPath = (String) jsonObject.get("fileServerPath");
+		String urlPath = (String) jsonObject.get("URLPath");
+
+		return fileLocation.replace(fileServerPath, urlPath);
+
+	}
+
+	/**
+	 * Reference: https://www.mkyong.com/java/itext-read-and-write-pdf-in-java/
+	 * 
+	 */
+	public File writeToPDF(File fileToConvert, String pdfName) throws IOException, DocumentException {
+
+		Document document = new Document();
+
+		File outputFile = new File(pdfName);
+		log.debug("Absolute Path of file to be converted: " + outputFile.getAbsolutePath());
+
+		PdfWriter.getInstance(document, new FileOutputStream(outputFile));
+		BufferedReader br = new BufferedReader(new FileReader(fileToConvert));
+		try {
+			document.open();
+			String line;
+			while ((line = br.readLine()) != null) {
+				Paragraph p = new Paragraph();
+				p.add(line);
+				document.add(p);
+			}
+		} finally {
+
+			document.close();
+			br.close();
+		}
+
+		return outputFile;
+
 	}
 
 }

@@ -1,10 +1,15 @@
 package com.RitCapstone.GradingApp.controller;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.apache.log4j.Logger;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
@@ -24,10 +29,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.RitCapstone.GradingApp.GradeHomework;
 import com.RitCapstone.GradingApp.HomeworkOptions;
 import com.RitCapstone.GradingApp.ProfessorAndGrader;
+import com.RitCapstone.GradingApp.service.FileService;
 import com.RitCapstone.GradingApp.service.GradeHomeworkService;
 import com.RitCapstone.GradingApp.service.HomeworkOptionsService;
 import com.RitCapstone.GradingApp.service.SubmissionDBService;
 import com.RitCapstone.GradingApp.validator.AuthenticationValidator;
+import com.itextpdf.text.DocumentException;
 
 @Controller
 @RequestMapping("/grader")
@@ -36,6 +43,7 @@ public class GraderController {
 
 	private static Logger log = Logger.getLogger(GraderController.class);
 
+	private static final String gradeDir = ".grade" + File.separator;
 	@Autowired
 	AuthenticationValidator authValidator;
 
@@ -47,6 +55,9 @@ public class GraderController {
 
 	@Autowired
 	SubmissionDBService submissionDBService;
+
+	@Autowired
+	FileService fileService;
 
 	/**
 	 * This method will trim all the strings received from form data
@@ -148,7 +159,7 @@ public class GraderController {
 		if (!isCorrect) {
 			return "redirect:showForm";
 		} else {
-			// TODO redirect to page where questions are listed
+			// redirect to page where questions are listed
 			return "redirect:showQuestionList";
 		}
 
@@ -221,18 +232,84 @@ public class GraderController {
 		return jspToDisplay;
 	}
 
-	@GetMapping("/questionStudent")
+	@GetMapping(value = "/questionStudent", params = { "studentName", "questionName" })
 	public String showGradingView(@RequestParam("questionName") String questionName,
 			@RequestParam("studentName") String studentName, Map<String, Object> model,
 			@SessionAttribute("gradeHomework") GradeHomework gradeHomework) {
 
 		String log_prepend = "[GET /questionStudent (" + questionName + ", " + studentName + ")]";
 		String homework = gradeHomework.getHomework();
-		String submissionLoc = submissionDBService.getSubmission(homework, studentName, questionName);
-		log.debug(log_prepend +" Submission Location: "+ submissionLoc);
-		
-		// TODO get contents to display the view 
-		
-		return "TEMP";
+		String submissionLoc = submissionDBService.getSubmissionLocation(homework, studentName, questionName);
+		log.debug(log_prepend + " Submission Location: " + submissionLoc);
+
+		String submissionPath = submissionDBService.getSubmissionPath(homework, studentName, questionName);
+		String destDir = submissionPath + gradeDir;
+
+		boolean unzipped = fileService.unzip(submissionLoc, destDir);
+
+		if (!unzipped) {
+			log.error(log_prepend + " error while unzipping zipFile to " + destDir);
+		} else {
+			System.out.println("UNZIPPED!!!!");
+		}
+
+		model.put("studentName", studentName);
+		model.put("questionName", questionName);
+		model.put("codeOutput", submissionDBService.getCodeOutput(homework, studentName, questionName));
+		model.put("expectedOutput", submissionDBService.getExpectedOutput(homework, studentName, questionName));
+		model.put("testcaseResult", submissionDBService.getTestcaseResult(homework, studentName, questionName));
+		model.put("submittedFiles", fileService.getFilenames(destDir));
+
+		return "graderView/enter-marks";
+	}
+
+	@GetMapping(value = "/questionStudent", params = { "studentName", "questionName", "file" })
+	public String showSubmissionFile(@RequestParam("questionName") String questionName,
+			@RequestParam("studentName") String studentName, @RequestParam("file") String filename,
+			@SessionAttribute("gradeHomework") GradeHomework gradeHomework, Map<String, Object> model,
+			HttpServletResponse response) {
+
+		String log_prepend = "[GET /questionStudent with file (" + filename + ")]";
+		String homework = gradeHomework.getHomework();
+		String submissionPath = submissionDBService.getSubmissionPath(homework, studentName, questionName);
+		String fileLoc = submissionPath + gradeDir + filename;
+
+		String urlLoc = "NOT-FOUND";
+
+		try {
+			urlLoc = fileService.getURLLocation(fileLoc);
+
+		} catch (IOException | ParseException e) {
+			log.error(log_prepend + " Error while getting urlPath for file " + filename + ": " + e.getMessage());
+		}
+
+		if (filename.endsWith(".pdf")) {
+			log.debug(log_prepend + " Redirecting to:" + urlLoc);
+			return "redirect:/" + urlLoc;
+		}
+
+		else {
+			try {
+
+				String extension = fileService.getExtension(new File(filename));
+				log.debug(log_prepend + " file Extension: " + extension);
+				String newFileName = filename.replace(extension, ".pdf");
+				File outputFile = fileService.writeToPDF(new File(fileLoc), newFileName);
+
+				try {
+					urlLoc = fileService.getURLLocation(outputFile.getAbsolutePath());
+
+				} catch (IOException | ParseException e) {
+					log.error(
+							log_prepend + " Error while getting urlPath for file " + filename + ": " + e.getMessage());
+				}
+
+				return "redirect:/" + urlLoc;
+
+			} catch (IOException | DocumentException e) {
+				log.error(log_prepend + " Can't convert " + filename + " to PDF: " + e.getMessage());
+				return "redirect:/" + urlLoc;
+			}
+		}
 	}
 }

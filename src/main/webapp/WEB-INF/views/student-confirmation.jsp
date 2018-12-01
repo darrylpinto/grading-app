@@ -22,7 +22,7 @@ body {
 <body>
 
 	<h3>ALGORITHMS-GRADING</h3>
-	Code For ${submission.problemName}:
+	Code For <b>${submission.problemName}</b>:
 	<br>
 
 	<c:forEach items="${codeFileNames}" var="fileName">
@@ -31,7 +31,7 @@ body {
 
 	<br>
 
-	<br> Write-up For ${submission.problemName}:
+	<br> Write-up For <b>${submission.problemName}</b>:
 
 	<br>
 

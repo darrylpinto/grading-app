@@ -1,5 +1,6 @@
 package com.RitCapstone.GradingApp.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -20,12 +21,24 @@ public class SubmissionDBService {
 
 	private static Logger log = Logger.getLogger(SubmissionDBService.class);
 
-	public String getSubmission(String homework, String username, String question) {
-
-		log.debug(String.format("Get submission: Homework (%s), username (%s), question (%s)", homework, username,
-				question));
-
+	public String getSubmissionLocation(String homework, String username, String question) {
 		return submissionDAO.getSubmissionLocation(homework, username, question);
+	}
+
+	public String getSubmissionPath(String homework, String username, String question) {
+		return submissionDAO.getSubmissionPath(homework, username, question);
+	}
+
+	public List<String> getCodeOutput(String homework, String username, String question) {
+		return submissionDAO.getCodeOutput(homework, username, question);
+	}
+
+	public List<String> getExpectedOutput(String homework, String username, String question) {
+		return submissionDAO.getExpectedOutput(homework, username, question);
+	}
+
+	public List<String> getTestcaseResult(String homework, String username, String question) {
+		return submissionDAO.getTestcaseResult(homework, username, question);
 	}
 
 	/**
@@ -43,7 +56,7 @@ public class SubmissionDBService {
 			String zipFileName) {
 
 		// If homework not there then createSubmission
-		if (getSubmission(homework, username, question) == null) {
+		if (getSubmissionLocation(homework, username, question) == null) {
 
 			log.debug(String.format("Creating new submission: Homework (%s), username (%s), question (%s)", homework,
 					username, question));
@@ -59,23 +72,23 @@ public class SubmissionDBService {
 
 	}
 
-	public boolean saveOutputAndTestCasesOutput(String homework, String username, String question,
-			List<String> codeOutput, List<String> codeStatus) {
+	public boolean saveOutputsAndResults(String homework, String username, String question, List<String> codeOutput,
+			List<String> expectedOutput, List<String> codeStatus) {
 
 		try {
-			boolean tryAdd = submissionDAO.addOutputAndTestCaseResults(homework, username, question, codeOutput,
-					codeStatus);
-			boolean tryUpdate = false;
+			boolean tryAdd = submissionDAO.addOutputListsAndResults(homework, username, question, codeOutput,
+					expectedOutput, codeStatus);
+
 			if (!tryAdd) {
-				tryUpdate = submissionDAO.updateOutputAndTestCaseResults(homework, username, question, codeOutput,
-						codeStatus);
+				boolean tryUpdate = submissionDAO.updateOutputListsAndResults(homework, username, question, codeOutput,
+						expectedOutput, codeStatus);
+				return tryUpdate;
+			} else {
+				return tryAdd;
 			}
 
-			return tryUpdate;
-
 		} catch (Exception e) {
-			log.error("Error in saveOutputAndTestCasesOutput:" + e.getMessage());
-			e.printStackTrace();
+			log.error("Error in saveOutputsAndResults:" + e.getMessage());
 			return false;
 		}
 	}
