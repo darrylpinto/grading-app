@@ -22,15 +22,18 @@ public class OnlineCompileAPIService {
 
 	private static Logger log = Logger.getLogger(OnlineCompileAPIService.class);
 
+	private static String API_URL = "https://api.judge0.com";
+//	private static String API_URL = "http://localhost:3000";  // Refer to github page of Judge0
+
 	@Autowired
 	FileService fileService;
+
 //	FileService fileService = new FileService(); // for testing only this file
 
-	public String getJSONValidStringCode(String dir_name, String mainFileName, String extension) throws Exception {
+	public String getJSONValidStringCode(String dirName, String mainFileName, String extension) throws Exception {
 
-		File dir = new File(dir_name);
+		File dir = new File(dirName);
 		File[] listOfFiles = dir.listFiles();
-
 		String jsonValidCodeString = "";
 		if (extension.equals("")) {
 			throw new Exception("unsupported format received: Allowed formats are '.java' and '.cpp'");
@@ -54,6 +57,7 @@ public class OnlineCompileAPIService {
 
 		for (File file : listOfFiles) {
 			String extension = fileService.getExtension(file);
+
 			if (extension.equals(".h")) {
 				headerFiles.add(file);
 			} else if (extension.equals(".cpp")) {
@@ -87,11 +91,16 @@ public class OnlineCompileAPIService {
 			// Remove user-defined header:For each line we search of name of header file in
 			// the line. If header file name is found we ignore that line
 			while ((line = reader.readLine()) != null) {
+				boolean headerPresent = false;
 				for (String headerName : headerFileNames) {
 					if (line.indexOf(headerName) == -1) {
-						currentFileContent += line + "\n";
+						headerPresent = true;
 					}
 				}
+
+				if (!headerPresent)
+					currentFileContent += line + "\n";
+
 			}
 
 			output += currentFileContent + "\n";
@@ -152,16 +161,16 @@ public class OnlineCompileAPIService {
 //			sc.close();
 //			
 			String fileOutput = "";
-			
+
 			BufferedReader br = new BufferedReader(new FileReader(testCaseFile));
 			String line;
-			
-			while((line=br.readLine())!= null) {
+
+			while ((line = br.readLine()) != null) {
 				line = line.replace("\t", "\\t");
 				fileOutput += line + "\\n";
 			}
-			
-			log.debug( testCaseFile.getName() + " converted to JSON Valid String");
+			br.close();
+			log.debug(testCaseFile.getName() + " converted to JSON Valid String");
 			return fileOutput;
 
 		} catch (IOException e) {
@@ -190,7 +199,7 @@ public class OnlineCompileAPIService {
 			String body = String.format("{\"source_code\": \"%s\", \"language_id\": %d, \"stdin\": \"%s\"}", sourceCode,
 					languageID, input);
 
-			HttpResponse<String> postResponse = Unirest.post("https://api.judge0.com/submissions/?base64_encoded=false")
+			HttpResponse<String> postResponse = Unirest.post(API_URL + "/submissions/?base64_encoded=false")
 					.header("Content-Type", "application/json").header("cache-control", "no-cache").body(body)
 					.asString();
 
@@ -203,10 +212,10 @@ public class OnlineCompileAPIService {
 			log.debug("Token: " + token);
 			JSONObject getResponseJson = null;
 			long statusId = -10;
-			String messageFromAPI = ""; 
+			String messageFromAPI = "";
 			while (true) {
-				Thread.sleep(250);
-				String getURL = String.format("https://api.judge0.com/submissions/%s?base64_encoded=false", token);
+				Thread.sleep(500);
+				String getURL = String.format(API_URL + "/submissions/%s?base64_encoded=false", token);
 				HttpResponse<String> getResponse = Unirest.get(getURL).header("Content-Type", "application/json")
 						.header("cache-control", "no-cache").asString();
 
@@ -239,7 +248,7 @@ public class OnlineCompileAPIService {
 			}
 			log.debug("Response: " + getResponseJson);
 			String output = (String) getResponseJson.get("stdout");
-			
+
 			if (statusId >= 5 && statusId <= 13) {
 				return "Compiler Says: " + messageFromAPI;
 			}
@@ -255,20 +264,22 @@ public class OnlineCompileAPIService {
 
 	public static void main(String args[]) throws Exception {
 
-		System.out.println("hi");
-		
+		System.out.println("hi: If you receive NullPointerException, "
+				+ "please comment @Autowired fileService, uncomment fileService");
+
 		OnlineCompileAPIService api = new OnlineCompileAPIService();
-		
+		String lang = "C++";
+
 		String code = api.getJSONValidStringCode(
 				"/home/darryl/eclipse-workspace/grading-app/src/main/java/com/RitCapstone/GradingApp/service/temp",
-				"DoubleTrouble", "Java");
-		
+				"Prerequisites", lang);
+
 		System.out.println("@@@" + code + "@@@");
 
-		String _input = api.getJSONValidTestCase(new File("/home/darryl/2018/DoubleTrouble/input-3.7"));
-		System.out.println("~~~"+_input+"~~~");
-		
-		String output = api.useJudge0API(code, "Java", _input);
+		String _input = api.getJSONValidTestCase(new File("/home/darryl/2018/Prerequisites/input-1.1"));
+		System.out.println("~~~" + _input + "~~~");
+
+		String output = api.useJudge0API(code, lang, _input);
 		System.out.println(output);
 
 		System.out.println("bye");
