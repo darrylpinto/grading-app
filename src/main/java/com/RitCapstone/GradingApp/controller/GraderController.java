@@ -3,11 +3,14 @@ package com.RitCapstone.GradingApp.controller;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.log4j.Logger;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -30,11 +34,13 @@ import com.RitCapstone.GradingApp.GradeHomework;
 import com.RitCapstone.GradingApp.HomeworkOptions;
 import com.RitCapstone.GradingApp.ProfessorAndGrader;
 import com.RitCapstone.GradingApp.service.FileService;
-import com.RitCapstone.GradingApp.service.GradeHomeworkService;
+import com.RitCapstone.GradingApp.service.GradingListService;
 import com.RitCapstone.GradingApp.service.HomeworkOptionsService;
+import com.RitCapstone.GradingApp.service.MarksAndFeedbackService;
 import com.RitCapstone.GradingApp.service.SubmissionDBService;
 import com.RitCapstone.GradingApp.validator.AuthenticationValidator;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfStructTreeController.returnType;
 
 @Controller
 @RequestMapping("/grader")
@@ -43,7 +49,7 @@ public class GraderController {
 
 	private static Logger log = Logger.getLogger(GraderController.class);
 
-	private static final String gradeDir = ".grade" + File.separator;
+	private static final String gradeDir = "grade-";
 	@Autowired
 	AuthenticationValidator authValidator;
 
@@ -51,13 +57,16 @@ public class GraderController {
 	HomeworkOptionsService homeworkOptionsService;
 
 	@Autowired
-	GradeHomeworkService gradeHomeworkService;
+	GradingListService gradingListService;
 
 	@Autowired
 	SubmissionDBService submissionDBService;
 
 	@Autowired
 	FileService fileService;
+
+	@Autowired
+	MarksAndFeedbackService marksAndFeedbackService;
 
 	/**
 	 * This method will trim all the strings received from form data
@@ -129,7 +138,6 @@ public class GraderController {
 		}
 
 		log.debug(log_prepend + "Displaying " + jspToDisplay);
-
 		return jspToDisplay;
 	}
 
@@ -138,7 +146,7 @@ public class GraderController {
 			BindingResult bindingResult, RedirectAttributes redirectAttribute) {
 
 		String log_prepend = "[POST /showForm (listByStudent)]";
-		boolean isCorrect = checkValidationForShowForm(log_prepend, gradeHwObject, bindingResult, redirectAttribute);
+		boolean isCorrect = checkValidationForHwSelecetd(log_prepend, gradeHwObject, bindingResult, redirectAttribute);
 
 		if (!isCorrect) {
 			return "redirect:showForm";
@@ -154,7 +162,7 @@ public class GraderController {
 			BindingResult bindingResult, RedirectAttributes redirectAttribute) {
 
 		String log_prepend = "[POST /showForm (listByQuestion)]";
-		boolean isCorrect = checkValidationForShowForm(log_prepend, gradeHwObject, bindingResult, redirectAttribute);
+		boolean isCorrect = checkValidationForHwSelecetd(log_prepend, gradeHwObject, bindingResult, redirectAttribute);
 
 		if (!isCorrect) {
 			return "redirect:showForm";
@@ -165,19 +173,20 @@ public class GraderController {
 
 	}
 
-	private boolean checkValidationForShowForm(String log_prepend, GradeHomework gradeHwObject,
+	private boolean checkValidationForHwSelecetd(String log_prepend, GradeHomework gradeHwObject,
 			BindingResult bindingResult, RedirectAttributes redirectAttribute) {
 
 		log.debug("In " + log_prepend);
 
-		if (bindingResult.hasErrors()) {
+		List<FieldError> homeworkSelectionError = bindingResult.getFieldErrors("homework");
+		if (homeworkSelectionError.size() > 0) {
 			redirectAttribute.addFlashAttribute("gradeHomework", gradeHwObject);
 			redirectAttribute.addFlashAttribute("org.springframework.validation.BindingResult.gradeHomework",
 					bindingResult);
-			log.error("homework section for GradeHomework not selected");
+			log.error("homework section for GradeHomework not selected:" + bindingResult);
 			return false;
 		}
-		log.debug("homework section for GradeHomework selected");
+		log.debug("homework section for GradeHomework selected:" + gradeHwObject.getHomework());
 		return true;
 	}
 
@@ -188,7 +197,9 @@ public class GraderController {
 		String log_prepend = "[GET /showStudentList]";
 		String jspToDisplay = "graderView/list-hw-by-student";
 		log.debug(log_prepend + " Displaying " + jspToDisplay);
-		model.put("studentList", gradeHomeworkService.getListOfStudents(gradeHomework.getHomework()));
+		model.put("studentList", gradingListService.getListOfStudents(gradeHomework.getHomework()));
+		resetMarksAndFeedback(gradeHomework);
+
 		return jspToDisplay;
 	}
 
@@ -199,7 +210,9 @@ public class GraderController {
 		String log_prepend = "[GET /showQuestionList]";
 		String jspToDisplay = "graderView/list-hw-by-question";
 		log.debug(log_prepend + " Displaying " + jspToDisplay);
-		model.put("questionList", gradeHomeworkService.getListOfQuestions(gradeHomework.getHomework()));
+		model.put("questionList", gradingListService.getListOfQuestions(gradeHomework.getHomework()));
+		resetMarksAndFeedback(gradeHomework);
+
 		return jspToDisplay;
 	}
 
@@ -212,8 +225,9 @@ public class GraderController {
 
 		log.debug(log_prepend + " Displaying " + jspToDisplay);
 		String homework = gradeHomework.getHomework();
-		model.put("questionListForStudent", gradeHomeworkService.getListOfQuestionsForStudent(homework, studentName));
+		model.put("questionListForStudent", gradingListService.getListOfQuestionsForStudent(homework, studentName));
 		model.put("studentName", studentName);
+		resetMarksAndFeedback(gradeHomework);
 		return jspToDisplay;
 
 	}
@@ -227,8 +241,9 @@ public class GraderController {
 
 		log.debug(log_prepend + " Displaying " + jspToDisplay);
 		String homework = gradeHomework.getHomework();
-		model.put("studentListForQuestion", gradeHomeworkService.getListOfStudentsForQuestion(homework, questionName));
+		model.put("studentListForQuestion", gradingListService.getListOfStudentsForQuestion(homework, questionName));
 		model.put("questionName", questionName);
+		resetMarksAndFeedback(gradeHomework);
 		return jspToDisplay;
 	}
 
@@ -243,14 +258,14 @@ public class GraderController {
 		log.debug(log_prepend + " Submission Location: " + submissionLoc);
 
 		String submissionPath = submissionDBService.getSubmissionPath(homework, studentName, questionName);
-		String destDir = submissionPath + gradeDir;
+
+		// To distinguish between unzipped files from multiple submissions
+		String destDir = getDestinationPathFormat(submissionPath, questionName);
 
 		boolean unzipped = fileService.unzip(submissionLoc, destDir);
 
 		if (!unzipped) {
 			log.error(log_prepend + " error while unzipping zipFile to " + destDir);
-		} else {
-			System.out.println("UNZIPPED!!!!");
 		}
 
 		model.put("studentName", studentName);
@@ -263,16 +278,49 @@ public class GraderController {
 		return "graderView/enter-marks";
 	}
 
+	@PostMapping(value = "/questionStudent", params = { "studentName", "questionName" })
+	public String submitMarks(@RequestParam("questionName") String questionName,
+			@RequestParam("studentName") String studentName,
+			@Valid @ModelAttribute("gradeHomework") GradeHomework gradeHwObject, BindingResult bindingResult,
+			RedirectAttributes redirectAttribute) {
+
+		if (bindingResult.hasErrors()) {
+			redirectAttribute.addFlashAttribute("gradeHomework", gradeHwObject);
+			redirectAttribute.addFlashAttribute("org.springframework.validation.BindingResult.gradeHomework",
+					bindingResult);
+			log.error("Marks not assisgned: " + bindingResult);
+
+		} else {
+
+			String homework = gradeHwObject.getHomework();
+			int marks = gradeHwObject.getMarksGiven();
+			String feedback = gradeHwObject.getFeedback();
+
+			marksAndFeedbackService.saveMarksAndFeedback(homework, studentName, questionName, marks, feedback);
+
+		}
+
+		return "redirect:questionStudent?questionName=" + questionName + "&studentName=" + studentName;
+	}
+
+	private String getDestinationPathFormat(String submissionPath, String questionName) {
+		return submissionPath + gradeDir + questionName + File.separator;
+	}
+
+	private void resetMarksAndFeedback(GradeHomework gradeHwObject) {
+		gradeHwObject.setFeedback("");
+		gradeHwObject.setMarksGiven(0);
+	}
+
 	@GetMapping(value = "/questionStudent", params = { "studentName", "questionName", "file" })
 	public String showSubmissionFile(@RequestParam("questionName") String questionName,
 			@RequestParam("studentName") String studentName, @RequestParam("file") String filename,
-			@SessionAttribute("gradeHomework") GradeHomework gradeHomework, Map<String, Object> model,
-			HttpServletResponse response) {
+			@SessionAttribute("gradeHomework") GradeHomework gradeHomework, Map<String, Object> model) {
 
 		String log_prepend = "[GET /questionStudent with file (" + filename + ")]";
 		String homework = gradeHomework.getHomework();
 		String submissionPath = submissionDBService.getSubmissionPath(homework, studentName, questionName);
-		String fileLoc = submissionPath + gradeDir + filename;
+		String fileLoc = getDestinationPathFormat(submissionPath, questionName) + filename;
 
 		String urlLoc = "NOT-FOUND";
 
@@ -312,4 +360,41 @@ public class GraderController {
 			}
 		}
 	}
+
+	@GetMapping("/showCompletedGrading")
+	public String showCompletedGrading(Map<String, Object> model,
+			@SessionAttribute("gradeHomework") GradeHomework gradeHomework) {
+
+		String log_prepend = "[GET /showCompletedGrading]";
+		Triple<List<String>, List<List<String>>, List<List<Integer>>> triple = marksAndFeedbackService
+				.getCompletedGrading(gradeHomework.getHomework());
+
+		log.debug(log_prepend + " Completed grading: " + triple);
+
+		List<String> students = triple.getLeft();
+		List<List<String>> questions = triple.getMiddle();
+		List<List<Integer>> marks = triple.getRight();
+
+		model.put("studentList", students);
+		model.put("questionListForStudent", questions);
+		model.put("marksListForStudent", marks);
+
+		log.debug("Displaying get-graded-files");
+		return "graderView/get-graded-files";
+//		return "TEMP";
+	}
+
+	@GetMapping("/Feedback")
+	public String getFeedback(@RequestParam("questionName") String questionName,
+			@RequestParam("studentName") String studentName,
+			@SessionAttribute("gradeHomework") GradeHomework gradeHomework, Map<String, Object> model) {
+
+		model.put("marks", marksAndFeedbackService.getMarks(gradeHomework.getHomework(), studentName, questionName));
+		model.put("feedback", marksAndFeedbackService.getFeedback(gradeHomework.getHomework(), studentName, questionName));
+
+		log.debug("Displaying get-feedback");
+		return "graderView/get-feedback";
+
+	}
+
 }

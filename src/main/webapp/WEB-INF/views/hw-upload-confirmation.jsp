@@ -18,7 +18,7 @@
 	<br>
 	<b>Question Details</b>
 	<br> Question number: ${question.questionNumber}
-	<br> Question Description: ${question.questionDescription}
+<%-- 	<br> Question Description: ${question.questionDescription} --%>
 	<br> Problem Name: ${question.problemName}
 	<br> test case inputs:
 	<br>

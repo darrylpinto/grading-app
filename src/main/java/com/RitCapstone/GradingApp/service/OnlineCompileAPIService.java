@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -146,12 +145,23 @@ public class OnlineCompileAPIService {
 
 		try {
 
-			Scanner sc = new Scanner(testCaseFile);
-			sc.useDelimiter("\\Z");
-			String fileOutput = sc.next();
-			fileOutput = fileOutput.replace("\t", "\\t").replace("\n", "\\n");
-			sc.close();
-			log.debug("Test case file converted to JSON Valid String");
+//			Scanner sc = new Scanner(testCaseFile);
+//			sc.useDelimiter("\\Z");
+//			String fileOutput = sc.next();
+//			fileOutput = fileOutput.replace("\t", "\\t").replace("\n", "\\n");
+//			sc.close();
+//			
+			String fileOutput = "";
+			
+			BufferedReader br = new BufferedReader(new FileReader(testCaseFile));
+			String line;
+			
+			while((line=br.readLine())!= null) {
+				line = line.replace("\t", "\\t");
+				fileOutput += line + "\\n";
+			}
+			
+			log.debug( testCaseFile.getName() + " converted to JSON Valid String");
 			return fileOutput;
 
 		} catch (IOException e) {
@@ -193,8 +203,9 @@ public class OnlineCompileAPIService {
 			log.debug("Token: " + token);
 			JSONObject getResponseJson = null;
 			long statusId = -10;
+			String messageFromAPI = ""; 
 			while (true) {
-				Thread.sleep(500);
+				Thread.sleep(250);
 				String getURL = String.format("https://api.judge0.com/submissions/%s?base64_encoded=false", token);
 				HttpResponse<String> getResponse = Unirest.get(getURL).header("Content-Type", "application/json")
 						.header("cache-control", "no-cache").asString();
@@ -216,8 +227,9 @@ public class OnlineCompileAPIService {
 				 * GET https://api.judge0.com/statuses
 				 */
 				getResponseJson = (JSONObject) parser.parse(GETResponseBody);
-				JSONObject getResponseJson_status_ = (JSONObject) getResponseJson.get("status");
-				statusId = (Long) getResponseJson_status_.get("id");
+				JSONObject getResponseJson_status = (JSONObject) getResponseJson.get("status");
+				statusId = (Long) getResponseJson_status.get("id");
+				messageFromAPI = (String) getResponseJson_status.get("description");
 
 				if ((statusId == 1) || (statusId == 2)) {
 					// job is not completed, check again in sometime
@@ -227,14 +239,16 @@ public class OnlineCompileAPIService {
 			}
 			log.debug("Response: " + getResponseJson);
 			String output = (String) getResponseJson.get("stdout");
-			if (statusId == 5) {
-				return "**time limit exceeded**";
+			
+			if (statusId >= 5 && statusId <= 13) {
+				return "Compiler Says: " + messageFromAPI;
 			}
 
 			return output.trim();
 
 		} catch (Exception e) {
 			log.error("Error in useJudge0API(): " + e.getMessage());
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -242,15 +256,20 @@ public class OnlineCompileAPIService {
 	public static void main(String args[]) throws Exception {
 
 		System.out.println("hi");
+		
 		OnlineCompileAPIService api = new OnlineCompileAPIService();
+		
 		String code = api.getJSONValidStringCode(
 				"/home/darryl/eclipse-workspace/grading-app/src/main/java/com/RitCapstone/GradingApp/service/temp",
-				"IntervalsBreaks", "Java");
-
+				"DoubleTrouble", "Java");
+		
 		System.out.println("@@@" + code + "@@@");
-//		String _input = api.getJSONValidTestCase(new File("/home/darryl/cTestCases/input-2.6"));
-//		String output = api.useJudge0API(code, "Java", _input);
-//		System.out.println(output);
+
+		String _input = api.getJSONValidTestCase(new File("/home/darryl/2018/DoubleTrouble/input-3.7"));
+		System.out.println("~~~"+_input+"~~~");
+		
+		String output = api.useJudge0API(code, "Java", _input);
+		System.out.println(output);
 
 		System.out.println("bye");
 	}

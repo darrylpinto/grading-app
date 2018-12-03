@@ -24,5 +24,11 @@
 			href="questionStudent?questionName=${question}&studentName=${studentName}">${question}</a>
 		<br />
 	</c:forEach>
+
+	<br>
+	<br>
+	<a href="showCompletedGrading" target="_blank"> Click here</a> to see
+	students whose grading is completed
+
 </body>
 </html>

@@ -66,7 +66,7 @@ public class SubmissionDAOImpl implements SubmissionDAO {
 				return path;
 
 			default:
-				log.warn("ENTERED THE DEFUALT BLOCK OF SWITCH CASE: option=" + option);
+				log.warn("ENTERED THE DEFAULT BLOCK OF SWITCH CASE: option=" + option);
 				return null;
 			}
 

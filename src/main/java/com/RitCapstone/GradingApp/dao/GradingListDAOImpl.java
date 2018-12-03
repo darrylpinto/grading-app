@@ -12,9 +12,9 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 
 @Repository
-public class GradeHomeworkDAOImpl implements GradeHomeworkDAO {
+public class GradingListDAOImpl implements GradingListDAO {
 
-	private static Logger log = Logger.getLogger(GradeHomeworkDAOImpl.class);
+	private static Logger log = Logger.getLogger(GradingListDAOImpl.class);
 
 	@Override
 	public List<String> getListOfQuestions(String homework) {
@@ -34,7 +34,7 @@ public class GradeHomeworkDAOImpl implements GradeHomeworkDAO {
 		String targetField = "username";
 		String filterField = "question";
 
-		return getDistinctForField(homework, question, targetField, filterField);
+		return getDistinctForSpecificField(homework, question, targetField, filterField);
 	}
 
 	@Override
@@ -42,7 +42,7 @@ public class GradeHomeworkDAOImpl implements GradeHomeworkDAO {
 		String targetField = "question";
 		String filterField = "username";
 
-		return getDistinctForField(homework, username, targetField, filterField);
+		return getDistinctForSpecificField(homework, username, targetField, filterField);
 	}
 
 	private List<String> getDistinct(String collectionName, String field) {
@@ -62,7 +62,7 @@ public class GradeHomeworkDAOImpl implements GradeHomeworkDAO {
 
 	}
 
-	private List<String> getDistinctForField(String collectionName, String fieldName, String targetField,
+	private List<String> getDistinctForSpecificField(String collectionName, String fieldName, String targetField,
 			String filterField) {
 
 		log.debug(String.format("Collection: %s, TargetField: %s, FilterField: %s [value: %s]", collectionName,
@@ -89,8 +89,8 @@ public class GradeHomeworkDAOImpl implements GradeHomeworkDAO {
 	}
 
 	public static void main(String[] args) {
-//		System.out.println(new GradeHomeworkDAOImpl().getListOfStudents("Hw3"));
-//		System.out.println(new GradeHomeworkDAOImpl().getListOfQuestionsForStudent("Hw3", "abc"));
+//		System.out.println(new GradingListDAOImpl().getListOfStudents("Hw3"));
+//		System.out.println(new GradingListDAOImpl().getListOfQuestionsForStudent("Hw3", "abc"));
 	}
 
 }

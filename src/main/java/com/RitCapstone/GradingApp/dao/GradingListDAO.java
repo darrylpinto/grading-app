@@ -2,7 +2,7 @@ package com.RitCapstone.GradingApp.dao;
 
 import java.util.List;
 
-public interface GradeHomeworkDAO {
+public interface GradingListDAO {
 
 	public List<String> getListOfQuestions(String homework);
 

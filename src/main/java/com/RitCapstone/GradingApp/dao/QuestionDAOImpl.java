@@ -88,7 +88,7 @@ public class QuestionDAOImpl implements QuestionDAO {
 	public boolean updateQuestionMetaData(String homework, String questionNumber, String problemName,
 			String description, Date dueDate) {
 		log.info(
-				String.format("Creating new questionMetaData, Homework (%s), question (%s)", homework, questionNumber));
+				String.format("Updating questionMetaData, Homework (%s), question (%s)", homework, questionNumber));
 
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("homework", homework);

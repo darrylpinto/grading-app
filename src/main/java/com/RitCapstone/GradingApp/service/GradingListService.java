@@ -6,13 +6,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.RitCapstone.GradingApp.dao.GradeHomeworkDAO;
+import com.RitCapstone.GradingApp.dao.GradingListDAO;
 
 @Service
-public class GradeHomeworkService {
+public class GradingListService {
 
 	@Autowired
-	GradeHomeworkDAO gradeHomeworkDAO;
+	GradingListDAO gradingListDAO;
 
 	
 	private List<String> sortList(List<String> list){
@@ -21,18 +21,18 @@ public class GradeHomeworkService {
 	}
 	
 	public List<String> getListOfQuestions(String homework) {
-		return sortList(gradeHomeworkDAO.getListOfQuestions(homework));
+		return sortList(gradingListDAO.getListOfQuestions(homework));
 	}
 
 	public List<String> getListOfStudents(String homework) {
-		return sortList(gradeHomeworkDAO.getListOfStudents(homework));
+		return sortList(gradingListDAO.getListOfStudents(homework));
 	}
 
 	public List<String> getListOfStudentsForQuestion(String homework, String question) {
-		return sortList(gradeHomeworkDAO.getListOfStudentsForQuestion(homework, question));
+		return sortList(gradingListDAO.getListOfStudentsForQuestion(homework, question));
 	}
 
 	public List<String> getListOfQuestionsForStudent(String homework, String username) {
-		return sortList(gradeHomeworkDAO.getListOfQuestionsForStudent(homework, username));
+		return sortList(gradingListDAO.getListOfQuestionsForStudent(homework, username));
 	}
 }
