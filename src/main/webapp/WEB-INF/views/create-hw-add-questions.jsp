@@ -25,6 +25,10 @@ body {
 	display: table-cell;
 	vertical-align: middle;
 }
+
+.formfield * {
+	vertical-align: middle;
+}
 </style>
 
 <body>
@@ -41,10 +45,15 @@ body {
 		<form:errors path="problemName" cssClass="error" />
 		<br>
 
-		<br>Description:
-				<form:input path="questionDescription"
-			placeholder="Enter Description" />
-		<br>
+
+		<p class="formfield">
+			
+			<label for="textarea">Description: </label>
+			<textarea id="textarea" name="questionDescription" rows="25" cols="70"
+				placeholder="Enter Description">	
+				${question.questionDescription}
+			</textarea>
+		</p>
 
 		<br> Test Case Files:
 				<form:input path="testCases" type="file" multiple="multiple" />

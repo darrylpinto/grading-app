@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,11 +132,33 @@ public class SubmissionController {
 
 		String log_prepend = "[POST /showForm]";
 
-		// we want to focus on errors on homework and username field
+		// we want to focus on errors on homework and username and date field
+
 		List<FieldError> homework_err = bindingResult.getFieldErrors("homework");
 		List<FieldError> username_err = bindingResult.getFieldErrors("username");
 
 		if (homework_err.size() + username_err.size() > 0) {
+			redirectAttributes.addFlashAttribute("submission", submission);
+			redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.submission",
+					bindingResult);
+
+			log.debug(log_prepend + "Redirecting to showForm");
+			return "redirect:showForm";
+		}
+
+		Date currentDate = new Date();
+		submission.setDate(currentDate);
+
+		Date dueDate = questionMetadataService.getDueDate(submission.getHomework());
+
+		if (dueDate.compareTo(currentDate) < 0) {
+			// dueDate is before currentDate
+			bindingResult.rejectValue("date", "lateSubmission",
+					"Sorry! you are late to submit your Homework! Due date: " + dueDate);
+		}
+
+		List<FieldError> date_err = bindingResult.getFieldErrors("date");
+		if (date_err.size() > 0) {
 			redirectAttributes.addFlashAttribute("submission", submission);
 			redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.submission",
 					bindingResult);
@@ -349,7 +372,7 @@ public class SubmissionController {
 
 		// Save the codeOutput, expectedOutput and codeStatus to DB
 		submissionDBService.saveOutputsAndResults(homework, username, questionNumber, codeOutputList,
-				 expectedOutputList, codeStatus);
+				expectedOutputList, codeStatus);
 
 		// delete unzip folder, testcases and code
 		try {

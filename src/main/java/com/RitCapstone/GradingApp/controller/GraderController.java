@@ -361,6 +361,28 @@ public class GraderController {
 		}
 	}
 
+	@GetMapping(value = "/questionStudent", params = { "studentName", "questionName", "file", "original"})
+	public String showSubmissionFileAsOriginal(@RequestParam("questionName") String questionName,
+			@RequestParam("studentName") String studentName, @RequestParam("file") String filename,
+			@SessionAttribute("gradeHomework") GradeHomework gradeHomework, Map<String, Object> model) {
+
+		String log_prepend = "[GET /questionStudent with file (" + filename + ")]";
+		String homework = gradeHomework.getHomework();
+		String submissionPath = submissionDBService.getSubmissionPath(homework, studentName, questionName);
+		String fileLoc = getDestinationPathFormat(submissionPath, questionName) + filename;
+
+		String urlLoc = "NOT-FOUND";
+
+		try {
+			urlLoc = fileService.getURLLocation(fileLoc);
+
+		} catch (IOException | ParseException e) {
+			log.error(log_prepend + " Error while getting urlPath for file " + filename + ": " + e.getMessage());
+		}
+
+		return "redirect:/" + urlLoc;
+	}
+	
 	@GetMapping("/showCompletedGrading")
 	public String showCompletedGrading(Map<String, Object> model,
 			@SessionAttribute("gradeHomework") GradeHomework gradeHomework) {

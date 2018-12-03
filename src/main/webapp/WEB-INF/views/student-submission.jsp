@@ -44,6 +44,10 @@ body {
 		<br>
 
 		<input type="submit" value="SUBMIT" />
+
+		<br>
+		<br>		
+		<form:errors path="date" cssClass="error" />
 	</form:form>
 
 	Part 1/2

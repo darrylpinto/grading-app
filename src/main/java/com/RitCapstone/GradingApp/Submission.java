@@ -2,6 +2,7 @@ package com.RitCapstone.GradingApp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import javax.validation.constraints.NotBlank;
@@ -29,6 +30,8 @@ public class Submission {
 	private CommonsMultipartFile[] codeFiles;
 
 	private CommonsMultipartFile[] writeupFiles;
+	
+	private Date date;
 
 	public Submission() {
 		this.username = null;
@@ -117,5 +120,12 @@ public class Submission {
 		this.language = language;
 	}
 
-	
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
 }

@@ -13,5 +13,7 @@ public interface QuestionDAO {
 	public boolean updateQuestionMetaData(String homework, String questionNumber, String problemName,
 			String description, Date dueDate);
 	
+	public Date getDueDate(String homework);
+	
 	public String getQuestionNumber(String homeworkNumber, String problemName);
 }

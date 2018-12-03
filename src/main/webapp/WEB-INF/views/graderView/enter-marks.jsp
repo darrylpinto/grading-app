@@ -49,13 +49,27 @@ body {
 	<br>
 
 	<c:forEach items="${submittedFiles}" var="fileName">
+		
+		${fileName} 
+		&nbsp;&nbsp;
 		<a
 			href="questionStudent?studentName=${studentName}&questionName=${questionName}&file=${fileName}"
-			target="_blank">${fileName} </a>
+			target="_blank"> view as pdf</a>
+		
+		
+		&nbsp;&nbsp;
+		<a
+			href="questionStudent?studentName=${studentName}&questionName=${questionName}&file=${fileName}&original=true"
+			target="_blank"> view as original</a>
 		<br>
 	</c:forEach>
-	<br>
 
+	<br>
+	<small> * depending on your browser settings, file may open in
+		new tab, new window or may download</small>
+	<br>
+	<br>
+	
 	<br> Test Case Results:
 	<br>
 
@@ -86,7 +100,7 @@ body {
 		<br>
 
 		<p class="formfield">
-			<label for="textarea">Enter Feedback: </label>
+			<label for="textarea">Feedback: </label>
 			<textarea id="textarea" name="feedback" rows="5"
 				placeholder="Enter Feedback for Question ${questionName}">${gradeHomework.feedback}</textarea>
 		</p>

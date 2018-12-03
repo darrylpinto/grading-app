@@ -180,7 +180,6 @@ public class ProfessorController {
 			RedirectAttributes redirectAttributes) {
 
 		String log_prepend = "[POST /createNewHomework2]";
-
 		log.debug(log_prepend + "bindingResult: " + bindingResult);
 
 		testCaseValidator.validate(question, bindingResult);
@@ -307,7 +306,7 @@ public class ProfessorController {
 		model.put("homework", new Homework());
 		model.put("question", new Question());
 		model.put("currentQuestion", 0);
-		return "TEMP";
+		return "redirect:/welcome";
 	}
 }
 

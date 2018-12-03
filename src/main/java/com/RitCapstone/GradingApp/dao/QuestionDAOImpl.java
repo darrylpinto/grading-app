@@ -87,8 +87,7 @@ public class QuestionDAOImpl implements QuestionDAO {
 	@Override
 	public boolean updateQuestionMetaData(String homework, String questionNumber, String problemName,
 			String description, Date dueDate) {
-		log.info(
-				String.format("Updating questionMetaData, Homework (%s), question (%s)", homework, questionNumber));
+		log.info(String.format("Updating questionMetaData, Homework (%s), question (%s)", homework, questionNumber));
 
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("homework", homework);
@@ -125,7 +124,7 @@ public class QuestionDAOImpl implements QuestionDAO {
 
 	@Override
 	public String getQuestionNumber(String homework, String problemName) {
-		
+
 		String databaseName = MongoFactory.getDatabaseName();
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("homework", homework);
@@ -144,6 +143,31 @@ public class QuestionDAOImpl implements QuestionDAO {
 			String question = doc.get("question", String.class);
 			log.debug("Question number for Problem " + problemName + " is: " + question);
 			return question;
+		}
+
+	}
+
+	@Override
+	public Date getDueDate(String homework) {
+
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("homework", homework);
+
+		String databaseName = MongoFactory.getDatabaseName();
+		MongoCollection<Document> collection = MongoFactory.getCollection(databaseName, questionMetadataColl);
+		BasicDBObject searchQuery = new BasicDBObject(map);
+
+		FindIterable<Document> findIterable = collection.find(searchQuery);
+		MongoCursor<Document> cursor = findIterable.iterator();
+
+		if (!cursor.hasNext()) {
+			log.warn("Date not retrieved! No homework found: " + homework);
+			return null;
+		} else {
+			Document doc = cursor.next();
+			Date date = doc.get("dueDate", Date.class);
+			log.debug("DueDate for " + homework + " is: " + date);
+			return date;
 		}
 
 	}

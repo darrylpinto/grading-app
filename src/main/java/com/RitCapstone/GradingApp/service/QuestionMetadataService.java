@@ -43,4 +43,7 @@ public class QuestionMetadataService {
 		return questionDAO.getQuestionNumber(homeworkNumber, problemName);
 	}
 
+	public Date getDueDate(String homework) {
+		return questionDAO.getDueDate(homework);
+	}
 }
